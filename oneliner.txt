@@ -35,6 +35,9 @@ cat httpx.txt| httpx -mc 200 -silent -c 100 | anew httpx200.txt
 
 python3 ~/tools/Corsy/corsy.py  -i  httpx200.txt  -t 20 -o /path/output.json
 
+technolgy
+nuclei -u bentley.com -tags tech ~/cent-nuclei-templates/ -o  bentley.com-nuclei-tech.txt
+
 
 
 #dirsearch
