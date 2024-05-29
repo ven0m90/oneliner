@@ -1,13 +1,14 @@
+#url-nuclei-fuzz-cve
+echo  |while read domain ; do  waymore -mode U  -i $domain -oU  tmp-url.txt ; ffuf -t 100 -c -u "FUZZ" -w tmp-url.txt  -of csv -o ffuf-tmp.txt ; cat ffuf-tmp.txt | grep http | awk -F "," '{print $1}'||grep -viE png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt|anew  url.txt ;rm ffuf-tmp.txt ; rm  tmp-url.txt ; cat url.txt |uro|nuclei -silent -rl 05 -t  ~/fuzzing-templates/  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ; cat url.txt |uro|nuclei -silent -rl 05   -tags dast  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ; cat url.txt |uro|nuclei -silent -c 50 -t   ~/cent-nuclei-templates/ ~/nuclei-templates/  -tags cve -es info,low -o nuclei-cve |notify -bulk ; done
+
+#subdoman-takeover
+echo |while read domain ; do  subfinder -all -d  $domain  -silent  -o  tmp-sub.txt ;shodanx subdomain -d $domain   -to 5  -ra -o  tmp-sub.txt ;cat tmp-sub.txt | sort -u |httpx -silent -t 100 -mc 404|unfurl domain |anew 404sub.txt ;rm tmp-sub.txt ;cat 404sub.txt |httpx -silent -t 100 |nuclei -silent -c 50 -t ~/cent-nuclei-templates/ -tags takeover  -es info,low -o nuclei-takeover |notify -bulk ; done
+
+subdominator -l 404sub.txt  --validate  -o  takeovers-found.txt ; rm custom_fingerprints.json fingerprints.json ; cat takeovers-found.txt |notify -bulk 
+
+
+
 #Xray 
-
-
-mkdir -p ~/tools/xray
-
-wget https://github.com/chaitin/xray/releases/download/1.9.11/xray_linux_amd64.zip -P  ~/tools/xray/
-cd  ~/tools/xray/
-unzip xray_linux_amd64.zip
-chmod +x *
-cd ~
 
 ./xray_linux_amd64 ws --url-file url.txt --plugins xss,sqldet,xxe,ssrf,cmd-injection,path-traversal --ho $(date +"%T").html 
 
