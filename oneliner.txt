@@ -10,6 +10,21 @@ shodanx custom -to 20  -ra -cq ""  -o  .txt
 nuclei -tags cve   -es info,low  -silent  |notify -bulk
 
 
+reverse ip lokup
+...................
+#filter vulnrable ip
+
+cat nuclei.txt  |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew vuln-ip.txt
+
+#reverse ip lokup
+
+xargs -n1 -I{} whois -h whois.cymru.com {}
+
+sudo apt -y install curl whois bind9-host mtr-tiny jq ipcalc grepcidr nmap ncat aha
+curl "https://raw.githubusercontent.com/nitefood/asn/master/asn" -o asn ; chmod +x asn ; sudo mv asn /usr/bin
+
+
+
 
 #url-nuclei-fuzz-cve
 echo |while read domain ; do  waymore -mode U  -i $domain -oU  tmp-url.txt ;
