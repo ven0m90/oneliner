@@ -1,15 +1,48 @@
-#url-nuclei-fuzz-cve
-|while read domain ; do  waymore -mode U  -i $domain -oU  tmp-url.txt ; ffuf -mc 200,301,302,403 -t 100 -c -u "FUZZ" -w tmp-url.txt  -of csv -o ffuf-tmp.txt ; cat ffuf-tmp.txt | grep http |grep -viE png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt | awk -F "," '{print $1}' >> url.txt ; rm  tmp-url.txt ; cat url.txt |uro|nuclei -silent -rl 05 -t  ~/fuzzing-templates/  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ; cat url.txt |uro|nuclei -silent -rl 05   -tags dast  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ; echo $domain |nuclei -silent -c 50 -t   ~/cent-nuclei-templates/ ~/nuclei-templates/  -tags cve -es info,low -o nuclei-cve |notify -bulk ; done
+#shodanx-mass
 
+echo |while read domain ;
+shodanx custom -to 20  -ra -cq ""  -o  .txt 
+
+;done
+
+#nuclei
+
+nuclei -tags cve   -es info,low  -silent  |notify -bulk
+
+
+
+#url-nuclei-fuzz-cve
+echo |while read domain ; do  waymore -mode U  -i $domain -oU  tmp-url.txt ;
+
+cat  tmp-url.txt | grep http |grep -viE png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt | awk -F "," '{print $1}' >> url.txt ; rm  ffuf-temp.txt  ;
+
+ffuf -mc 200,301,302,403 -t 100 -c -u "FUZZ" -w tmp-url.txt  -of csv -o url.txt ;
+
+cat url.txt |uro|nuclei -silent -rl 05 -t  ~/fuzzing-templates/  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ;
+cat url.txt |uro|nuclei -silent -rl 05   -tags dast  -es info,low  -fuzz -o nuclei-fuzzing |notify -bulk ;
+echo $domain |nuclei -silent -c 50 -t   ~/cent-nuclei-templates/ ~/nuclei-templates/  -tags cve -es info,low -o nuclei-cve |notify -bulk 
+
+; done
 
 cat tmp-url.txt |grep -viE png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt| httpx -silent -mc 200,301,302,403 -t 100 |anew url.txt
 
+
+
+
+#shodanx-domain
+
+shodanx domain -d $domain  -to 10  -ra -o shazam-output/$domain/shodan/ips.txt
 
 #subdoman-takeover
 echo |while read domain ; do  subfinder -all -d  $domain  -silent  -o  tmp-sub.txt ;shodanx subdomain -d $domain   -to 5  -ra -o  tmp-sub.txt ;cat tmp-sub.txt | sort -u |httpx -silent -t 100 -mc 404|unfurl domain |anew 404sub.txt ;rm tmp-sub.txt ;cat 404sub.txt |httpx -silent -t 100 |nuclei -silent -c 50 -t ~/cent-nuclei-templates/ -tags takeover  -es info,low -o nuclei-takeover |notify -bulk ; done
 
 subdominator -l 404sub.txt  --validate  -o  takeovers-found.txt ; rm custom_fingerprints.json fingerprints.json ; cat takeovers-found.txt |notify -bulk 
 
+
+#toekn  checking nuclei 
+
+nuclei -tags token-spray -t ~/cent-nuclei-templates/  -var token=
+nuclei -tags token-spray    -var token=
 
 
 #Xray 
