@@ -1,6 +1,8 @@
 #shodanx-mass
 
-echo |while read domain ;
+while read domain 
+for i in {1..10}; do 
+
 shodanx custom -to 20  -ra -cq ""  -o  .txt 
 
 ;done
