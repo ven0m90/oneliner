@@ -12,6 +12,10 @@ shodanx custom -to 20  -ra -cq ""  -o  .txt
 nuclei -tags cve   -es info,low  -silent  |notify -bulk
 
 
+#for loop
+for i in {1..10}; do shodanx custom -to 20  -ra -cq "html:\'welcome.cgi?p=logo\''  -o ip.txt; sleep 10 ;done ; cat ip.txt|sort -u |httpx  -silent -t 100|nuclei -tags cve,ivanti -o nuclei-found -es info,low  -silent -c 50  |notify -bulk
+
+
 reverse ip lokup
 ...................
 #filter vulnrable ip
