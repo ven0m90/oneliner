@@ -17,7 +17,7 @@ httpx  -silent -t 50|nuclei  -tags cve -es info,low   -c 50  -t   ~/Nuclei-Templ
 
 #nuclei-fuzzing
 
-httpx  -silent -t 50|nuclei  -es info,low  -fuzz  -tags dast   -t   ~/Nuclei-Templates-Collection/   -o nuclei.txt   |notify -bulk
+nuclei  -es info,low  -fuzz  -tags dast   -t   ~/Nuclei-Templates-Collection/   -o nuclei.txt   |notify -bulk
 
 
 
