@@ -138,7 +138,7 @@ cat url-all.txt| unfurl -unique keys |anew target_wordlist/param.txt
 mkdir -p urls ; mv url-*  urls/
 
 
-#Gf Patterns 
+# gfx Patterns 
 #........................................................................................................................................
 
 #checking live url
@@ -153,19 +153,19 @@ cat ffuf-temp | grep http | awk -F "," '{print $1}' |anew urls/live-url.txt
 rm gf-tmp.txt
 rm ffuf-temp 
 
-mkdir -p gf 
+mkdir -p  gf
 
-gf xss urls/live-url.txt |anew gf/xss.txt
-gf ssrf urls/live-url.txt |anew gf/ssrf.txt
-gf sqli urls/live-url.txt |anew gf/sql.txt
-gf lfi urls/live-url.txt |anew gf/lfi.txt
-gf ssti urls/live-url.txt |anew gf/ssti.txt
-gf redirect urls/live-url.txt |anew gf/redirect.txt
-gf idor urls/live-url.txt |anew gf/idor.txt
-gf ip urls/live-url.txt |anew gf/ip.txt
-gf rce urls/live-url.txt |anew gf/rce.txt
-gf s3-buckets urls/live-url.txt |anew gf/s3-buckets.txt
-gf upload-fields urls/live-url.txt |anew gf/upload-fields.txt
+ gfx xss urls/live-url.txt |anew gf/xss.txt
+ gfx ssrf urls/live-url.txt |anew gf/ssrf.txt
+ gfx sqli urls/live-url.txt |anew gf/sql.txt
+ gfx lfi urls/live-url.txt |anew gf/lfi.txt
+ gfx ssti urls/live-url.txt |anew gf/ssti.txt
+ gfx redirect urls/live-url.txt |anew gf/redirect.txt
+ gfx idor urls/live-url.txt |anew gf/idor.txt
+ gfx ip urls/live-url.txt |anew gf/ip.txt
+ gfx rce urls/live-url.txt |anew gf/rce.txt
+ gfx s3-buckets urls/live-url.txt |anew gf/s3-buckets.txt
+ gfx upload-fields urls/live-url.txt |anew gf/upload-fields.txt
 
 
 
@@ -186,21 +186,21 @@ rm ffuf-js
 
 cat urls/live-js.txt|nipejs -s -c 100 |anew nipejs
 
-#Gf Patterns on nipej
+# gfx Patterns on nipej
 #....................
 
 
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf xss |anew gf/xss.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ssrf |anew gf/ssrf.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf sqli |anew gf/sql.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf lfi |anew gf/lfi.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ssti |anew gf/ssti.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf redirect |anew gf/redirect.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf idor |anew gf/idor.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf ip |anew gf/ip.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf rce |anew gf/rce.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf s3-buckets |anew gf/s3-buckets.txt
-cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gf upload-fields |anew gf/upload-fields.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx xss |anew gf/xss.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx ssrf |anew gf/ssrf.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx sqli |anew gf/sql.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx lfi |anew gf/lfi.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx ssti |anew gf/ssti.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx redirect |anew gf/redirect.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx idor |anew gf/idor.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx ip |anew gf/ip.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx rce |anew gf/rce.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx s3-buckets |anew gf/s3-buckets.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' | gfx upload-fields |anew gf/upload-fields.txt
 
 
 
