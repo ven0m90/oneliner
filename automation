@@ -1,0 +1,231 @@
+
+#httpx
+
+cat naabu.txt |httpx   -t 100 -silent|anew httpx.txt;
+
+
+
+#vulners-cve-nmap
+#........................................................................................................................................
+
+echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
+chmod +rwx /usr/share/nmap/scripts/
+echo 'root' | sudo -kS rm  vulners.nse* 
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse* 
+echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+echo 'root' | sudo -kS  nmap --script-updatedb
+
+echo "nmap vulners started  -->  " |notify -silent  -bulk ;  
+echo 'root' |sudo -kS naabu -l naabu.txt -c 50 -Pn -silent  -nmap-cli "nmap --min-rate 10000 -Pn -T4 -D RND:5 -sVC -v  --script vulners,vuln --script-args mincvss=5.0 -oA vulners"
+
+mkdir -p nmap ; mv vulners* nmap/
+
+#brutesprey
+#........................................................................................................................................
+echo "brutespray started  -->  " |notify -silent  -bulk ;  
+
+brutespray -f nmap/vulners.gnmap
+
+
+
+#cors
+#........................................................................................................................................
+
+cat  httpx.txt|python3 ~/tools/Corsy/corsy.py -t 20 -o ips-cors.json ;
+cat ips-cors.json|jq|notify -silent  -bulk
+
+
+#nuclei
+#........................................................................................................................................
+#downloading-latest-template
+rm -rf ~/nuclei-templates
+git clone https://github.com/projectdiscovery/nuclei-templates ~/nuclei-templates
+export GITHUB_TEMPLATE_REPO=topscoder/nuclei-wordfence-cve
+nuclei -update-templates
+
+#nuclei-cve
+echo "nuclei cve checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info  -tags cve -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+
+#nuclei-misconfig
+echo "nuclei misconfig checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info -tags panel,default-login,exposure,misconfig,xss,lfi -o ips-nuclei.txt -c 50 |notify -silent -bulk
+
+#nuclei-all
+#echo "nuclei all checking --> ips-httpx.txt" |notify -silent  -bulk ;  
+#cat httpx.txt|nuclei -etags mx,favicon  ~/nuclei-templates/ -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+
+
+
+#screenshot
+#........................................................................................................................................
+echo "screenshoting and nuclei tech started  -->  " |notify -silent  -bulk ;  
+
+cat httpx.txt| aquatone -out ips-screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
+cat httpx.txt|nuclei  -etags dos,favicon,mx  -tags tech -c 100 -o  ips-tech.txt ;
+
+
+
+
+
+
+
+
+
+#urls-crawling
+#........................................................................................................................................
+echo "url crawling started  -->  " |notify -silent  -bulk ;  
+#cat httpx.txt| waymore -mode U  --no-subs -oU url-tmp.txt
+katana -silent -c 300  -list httpx.txt-cs httpx.txt|anew url-tmp.txt
+
+cat url-tmp.txt|anew url-all.txt
+rm url-tmp.txt
+
+
+#target Based Wordlist
+#........................................................................................................................................
+mkdir -p target_wordlist
+
+
+cat url-all.txt | unfurl -unique paths  |anew target_wordlist/paths.txt
+cat url-all.txt| unfurl -unique keys |anew target_wordlist/param.txt
+
+mkdir -p urls ; mv url-*  urls/
+
+
+#gfx Patterns 
+#........................................................................................................................................
+
+#checking live url
+#....................
+
+cat urls/url-all.txt | egrep -v "\.woff|\.ttf|\.svg|\.eot|\.png|\.jpep|\.jpeg|\.css|\.ico|\jpg" | sed 's/:80//g;s/:443//g' | anew gf-tmp.txt
+
+ffuf -t 100  -mc 200,301  -c -u "FUZZ" -w gf-tmp.txt -of csv -o ffuf-temp
+
+cat ffuf-temp | grep http | awk -F "," '{print $1}' |anew urls/live-url.txt
+
+rm gf-tmp.txt
+rm ffuf-temp 
+
+mkdir -p gf
+
+gfx xss urls/live-url.txt |anew gf/xss.txt
+gfx ssrf urls/live-url.txt |anew gf/ssrf.txt
+gfx sqli urls/live-url.txt |anew gf/sql.txt
+gfx lfi urls/live-url.txt |anew gf/lfi.txt
+gfx ssti urls/live-url.txt |anew gf/ssti.txt
+gfx redirect urls/live-url.txt |anew gf/redirect.txt
+gfx idor urls/live-url.txt |anew gf/idor.txt
+gfx ip urls/live-url.txt |anew gf/ip.txt
+gfx rce urls/live-url.txt |anew gf/rce.txt
+gfx s3-buckets urls/live-url.txt |anew gf/s3-buckets.txt
+gfx upload-fields urls/live-url.txt |anew gf/upload-fields.txt
+
+
+
+#url-js-filter
+#........................................................................................................................................
+
+cat urls/live-url.txt| uro|grep "\.js$" |anew js-tmp.txt
+
+ffuf -t 100 -c -mc 200 -u "FUZZ" -w js-tmp.txt -of csv -o ffuf-js
+
+cat ffuf-js| grep http | awk -F "," '{print $1}' |anew urls/live-js.txt
+
+rm js-tmp.txt
+rm ffuf-js
+
+#nipejs
+#....................
+
+cat urls/live-js.txt|nipejs -s -c 100 |anew nipejs
+
+#gfx Patterns on nipej
+#....................
+
+
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx xss |anew gf/xss.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ssrf |anew gf/ssrf.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx sqli |anew gf/sql.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx lfi |anew gf/lfi.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ssti |anew gf/ssti.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx redirect |anew gf/redirect.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx idor |anew gf/idor.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ip |anew gf/ip.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx rce |anew gf/rce.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx s3-buckets |anew gf/s3-buckets.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx upload-fields |anew gf/upload-fields.txt
+
+
+
+#js-downloading
+#....................
+
+
+mkdir -p urls/js-download/
+echo -e "\033[33m[+] Downloading js files  \033[m"
+cat urls/live-js.txt | xargs -P0 -n1 -I  {} wget -c "{}"  -P urls/js-download/
+
+
+
+#nuclei-fuzzing-urls
+#........................................................................................................................................
+echo -e "\033[33m[+] nuclei fuzzinng on url  \033[m"|notify -silent -bulk 
+cat urls/live-url.txt |uro|nuclei  -es info,low  -fuzz -t  ~/fuzzing-templates -t ~/nuclei-templates -o nuclei-fuzzing |notify -silent -bulk 
+
+
+
+#xss-urls-freq
+#........................................................................................................................................
+mkdir -p bugs
+
+cat urls/live-url.txt  | uro| grep "=" | qsreplace '"><img src=x onerror=alert(1)>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt|notify -silent -bulk 
+cat urls/live-url.txt |uro|grep "=" | qsreplace '"><script>alert(1)</script>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt|notify -silent -bulk 
+
+
+
+#urls-crawling
+#........................................................................................................................................
+
+
+
+
+#asn
+#..........
+
+cat  httpx.txt   |  dnsx  -asn -silent | anew asn-number.txt
+
+
+#ip-filter-domains
+..................
+
+
+cat  vuln-ip.txt  |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |hakip2host -t 100 |anew vuln-host.txt 
+
+#ip-filter-org
+
+cat ip.txt |tlsx -so -j|jq .subject_org
+
+
+
+#bug0bounty-program checking
+................................
+
+cat all-bugbounty-domains.txt|while read h ;do cat vuln-host.txt |grep $h|sort -u|anew hack;done
+
+
+#exploit-download
+
+https://github.com/vulnersCom/getsploit
+
+
+............................................................................................................................................
+#date
+
+echo "$(date '+%D %T' | toilet -f term -F border --gay)"
+
+#banner
+
+echo SUB-ENUM| toilet -f term -F border --gay
+
