@@ -209,23 +209,4 @@ cat ip.txt |tlsx -so -j|jq .subject_org
 
 
 
-#bug0bounty-program checking
-................................
-
-cat all-bugbounty-domains.txt|while read h ;do cat vuln-host.txt |grep $h|sort -u|anew hack;done
-
-
-#exploit-download
-
-https://github.com/vulnersCom/getsploit
-
-
-............................................................................................................................................
-#date
-
-echo "$(date '+%D %T' | toilet -f term -F border --gay)"
-
-#banner
-
-echo SUB-ENUM| toilet -f term -F border --gay
 
