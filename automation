@@ -1,3 +1,23 @@
+#ip-filter-org-mannual
+...........................
+
+cat shodan/ips.txt |tlsx -so 
+
+
+shodanx org -to 20  -ra -org "Indeed, Inc."  -o shodan/ip.txt
+#ip-filter
+#..............................
+cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+
+#ip-filter
+cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host -t 100 |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+rm shodan/ip.txt ;sleep 5 ;
+
+
+
+
+
+
 
 #httpx
 
@@ -202,10 +222,6 @@ cat  httpx.txt   |  dnsx  -asn -silent | anew asn-number.txt
 
 
 cat  vuln-ip.txt  |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |hakip2host -t 100 |anew vuln-host.txt 
-
-#ip-filter-org
-
-cat ip.txt |tlsx -so -j|jq .subject_org
 
 
 
