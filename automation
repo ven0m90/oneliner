@@ -31,8 +31,8 @@ brutespray -f nmap/vulners.gnmap
 #cors
 #........................................................................................................................................
 
-cat  httpx.txt|python3 ~/tools/Corsy/corsy.py -t 20 -o ips-cors.json ;
-cat ips-cors.json|jq|notify -silent  -bulk
+cat  httpx.txt|python3 ~/tools/Corsy/corsy.py -t 20 -o cors.json ;
+cat cors.json|jq|notify -silent  -bulk
 
 
 #nuclei
@@ -44,16 +44,16 @@ export GITHUB_TEMPLATE_REPO=topscoder/nuclei-wordfence-cve
 nuclei -update-templates
 
 #nuclei-cve
-echo "nuclei cve checking --> ips-httpx.txt" |notify -silent  -bulk ;  
-cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info  -tags cve -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+echo "nuclei cve checking --> httpx.txt" |notify -silent  -bulk ;  
+cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info  -tags cve -o nuclei.txt -c 50 |notify -silent  -bulk
 
 #nuclei-misconfig
-echo "nuclei misconfig checking --> ips-httpx.txt" |notify -silent  -bulk ;  
-cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info -tags panel,default-login,exposure,misconfig,xss,lfi -o ips-nuclei.txt -c 50 |notify -silent -bulk
+echo "nuclei misconfig checking --> httpx.txt" |notify -silent  -bulk ;  
+cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info -tags panel,default-login,exposure,misconfig,xss,lfi -o nuclei.txt -c 50 |notify -silent -bulk
 
 #nuclei-all
-#echo "nuclei all checking --> ips-httpx.txt" |notify -silent  -bulk ;  
-#cat httpx.txt|nuclei -etags mx,favicon  ~/nuclei-templates/ -o ips-nuclei.txt -c 50 |notify -silent  -bulk
+#echo "nuclei all checking --> httpx.txt" |notify -silent  -bulk ;  
+#cat httpx.txt|nuclei -etags mx,favicon  ~/nuclei-templates/ -o nuclei.txt -c 50 |notify -silent  -bulk
 
 
 
@@ -61,8 +61,8 @@ cat httpx.txt|nuclei -es low,info  -etags mx,favicon,dos,low,info -tags panel,de
 #........................................................................................................................................
 echo "screenshoting and nuclei tech started  -->  " |notify -silent  -bulk ;  
 
-cat httpx.txt| aquatone -out ips-screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
-cat httpx.txt|nuclei  -etags dos,favicon,mx  -tags tech -c 100 -o  ips-tech.txt ;
+cat httpx.txt| aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
+cat httpx.txt|nuclei  -etags dos,favicon,mx  -tags tech -c 100 -o  tech.txt ;
 
 
 
