@@ -24,6 +24,25 @@ cat ip.txt |xargs -n1 -I{} whois -h whois.cymru.com {}
 nuclei -tags token-spray    -var token=
 
 
+
+#bug0bounty-program checking
+................................
+
+cat all-bugbounty-domains.txt|while read h ;do cat vuln-host.txt |grep $h|sort -u|anew hack;done
+
+
+#exploit-download
+
+https://github.com/vulnersCom/getsploit
+
+
+#date
+echo "$(date '+%D %T' | toilet -f term -F border --gay)"
+
+#banner
+
+echo SUB-ENUM| toilet -f term -F border --gay
+
 #Xray 
 ./xray_linux_amd64 ws --url-file url.txt --plugins xss,sqldet,xxe,ssrf,cmd-injection,path-traversal --ho $(date +"%T").html 
 ./xray_linux_amd64 ws --url-file url.txt  --ho $(date +"%T").html 
