@@ -45,7 +45,7 @@ export target=wilecard
 #download resolver
 rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
 
-cat  $target |while read domain; do echo $domain|anew tmp.txt;  findomain  -t $domain -q | anew tmp.txt ; subfinder -all -d  $domain  -o tmp.txt ;shodanx subdomain -d $domain  -to 50 -ra -o tmp.txt ;  done
+cat  $target |while read domain; do echo $domain|anew tmp.txt; sublist3r -d $domain -o tmp.txt ; findomain  -t $domain -q | anew tmp.txt ; subfinder -all -d  $domain |anew tmp.txt ;shodanx subdomain -d $domain  -to 50 -ra -o tmp.txt ;  done
 
 #bruteforce-sub puredns
 #..............................
