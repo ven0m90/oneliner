@@ -14,9 +14,7 @@ cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host -t 100 |
 rm shodan/ip.txt ;sleep 5 ;
 
 
-
-
-
+cat shodan/ips.txt  |sort -u |naabu -c 100 -top-ports 1000  -silent|anew shodan/naabu.txt ;
 
 
 #httpx
