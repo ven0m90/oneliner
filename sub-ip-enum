@@ -1,3 +1,7 @@
+nano  wilecard
+nano  outscop.txt
+nano singal
+
 #shodanx-ip uncover
 #..............................
 mkdir -p shodan ; chmod +rwx shodan/*
