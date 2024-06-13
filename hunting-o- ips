@@ -1,0 +1,229 @@
+#hunting on ip
+...............
+
+  
+nano  wilecard
+nano  outscop.txt
+nano singal
+
+
+#shodanx-ip uncover
+#..............................
+mkdir -p shodan ; chmod +rwx shodan/*
+
+cat wilecard singal | while read host ; do shodanx domain -to 20  -ra -d $host   -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "hostname:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl.cert.subject.cn:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "http.title:'$host'"  -o  shodan/ip.txt ;echo $host |cut -d'.' -f1|anew org ;done ; cat org | while read host ; do shodanx custom -to 20  -ra -cq "org:$host"  -o  shodan/ip.txt ; rm org ;uncover -q  ' "ssl:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ;uncover -q  ' "hostname:$domain"'   -silent -e censys,shodan,zoomeye,netlas  |anew  shodan/ip.txt  ;uncover -q  ' "http.title:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ; done
+
+
+#favicon-hash
+cat wilecard singal | while read host ;do echo $host|httpx |python3 ~/tools/FavFreak/favfreak.py --shodan -o fav ;ls  fav/* |tr -d fav/|tr -d .txt |anew hash.txt ;done ; 
+cat hash.txt| while read host ;do shodanx custom -to 20  -ra -cq "http.favicon.hash:'$host'"  -o  shodan/ip.txt ;rm hash.txt ;rm -rf fav/ ;done
+
+
+
+#ip-filter
+#..............................
+cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+
+#ip-filter
+cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host  |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+rm shodan/ip.txt ;sleep 5 ;
+
+#night work
+#........................................................................
+
+  
+#port-scan
+#........................................................................................................................................
+echo  "port scaning started ips -->"   |notify -silent  -bulk ;  
+cat shodan/ips.txt  |sort -u |naabu  -top-ports 1000  -silent|anew shodan/naabu.txt ;
+
+#httpx
+echo "httpx started ips -->  " |notify -silent  -bulk ;  
+cat  shodan/naabu.txt |httpx  -silent|anew shodan/httpx.txt;
+
+#screenshot
+#........................................................................................................................................
+echo "screenshoting started ips -->  " |notify -silent  -bulk ;  
+cat shodan/httpx.txt| aquatone -out  shodan/screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
+
+
+
+#vulners-cve-nmap
+#........................................................................................................................................
+
+echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
+chmod +rwx /usr/share/nmap/scripts/
+echo 'root' | sudo -kS rm  vulners.nse* 
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse* 
+echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+echo 'root' | sudo -kS  nmap --script-updatedb
+
+echo "vulners started ips -->  " |notify -silent  -bulk ;  
+echo 'root' |sudo -kS naabu -l shodan/naabu.txt  -Pn -silent  -nmap-cli "nmap  -Pn -T4 -D RND:5 -sVC -v  --script vulners,vuln --script-args mincvss=5.0 -oA vulners"
+
+mkdir -p  shodan/nmap ; mv vulners*  shodan/nmap/
+
+#night work nuclei this take log time
+#........................................................................  
+
+#nuclei
+#........................................................................................................................................
+#downloading-latest-template
+cent -p ~/cent-nuclei-templates
+cent update -p ~/cent-nuclei-templates -d
+cent update -p ~/cent-nuclei-templates -f
+
+
+echo "nuclei cve started --> shodan/httpx.txt" |notify -silent  -bulk ;  
+cat shodan/httpx.txt|nuclei -t ~/cent-nuclei-templates  -tags cve -o nuclei-cve.txt  |notify -silent  -bulk
+
+
+
+
+  
+
+
+#next day work beacuse nuclei take time to scan if you have hug target than to these step after nuclei complate
+  
+#................................  
+#brutesprey
+#........................................................................................................................................
+echo "brutespray started ips -->  " |notify -silent  -bulk ;  
+brutespray -f  shodan/nmap/vulners.gnmap
+
+
+#cors
+#........................................................................................................................................
+
+cat  shodan/httpx.txt|python3 ~/tools/Corsy/corsy.py -t 20 -o cors.json ;
+cat cors.json|jq|notify -silent  -bulk  
+
+#urls-crawling
+#........................................................................................................................................
+echo "url crawling started  -->  " |notify -silent  -bulk ;  
+#cat shodan/httpx.txt| waymore -mode U  --no-subs -oU url-tmp.txt
+katana -silent -c 300  -list shodan/httpx.txt-cs shodan/httpx.txt|anew url-tmp.txt
+
+cat url-tmp.txt|anew url-all.txt
+rm url-tmp.txt
+
+
+#target Based Wordlist
+#........................................................................................................................................
+mkdir -p target_wordlist
+
+
+cat url-all.txt | unfurl -unique paths  |anew target_wordlist/paths.txt
+cat url-all.txt| unfurl -unique keys |anew target_wordlist/param.txt
+
+mkdir -p urls ; mv url-*  urls/
+
+
+#gfx Patterns 
+#........................................................................................................................................
+
+#checking live url
+#....................
+
+cat urls/url-all.txt | egrep -v "\.woff|\.ttf|\.svg|\.eot|\.png|\.jpep|\.jpeg|\.css|\.ico|\jpg" | sed 's/:80//g;s/:443//g' | anew gf-tmp.txt
+
+ffuf -t 100  -mc 200,301  -c -u "FUZZ" -w gf-tmp.txt -of csv -o ffuf-temp
+
+cat ffuf-temp | grep http | awk -F "," '{print $1}' |anew urls/live-url.txt
+
+rm gf-tmp.txt
+rm ffuf-temp 
+
+mkdir -p gf
+
+gfx xss urls/live-url.txt |anew gf/xss.txt
+gfx ssrf urls/live-url.txt |anew gf/ssrf.txt
+gfx sqli urls/live-url.txt |anew gf/sql.txt
+gfx lfi urls/live-url.txt |anew gf/lfi.txt
+gfx ssti urls/live-url.txt |anew gf/ssti.txt
+gfx redirect urls/live-url.txt |anew gf/redirect.txt
+gfx idor urls/live-url.txt |anew gf/idor.txt
+gfx ip urls/live-url.txt |anew gf/ip.txt
+gfx rce urls/live-url.txt |anew gf/rce.txt
+gfx s3-buckets urls/live-url.txt |anew gf/s3-buckets.txt
+gfx upload-fields urls/live-url.txt |anew gf/upload-fields.txt
+
+
+
+#url-js-filter
+#........................................................................................................................................
+
+cat urls/live-url.txt| uro|grep "\.js$" |anew js-tmp.txt
+
+ffuf -t 100 -c -mc 200 -u "FUZZ" -w js-tmp.txt -of csv -o ffuf-js
+
+cat ffuf-js| grep http | awk -F "," '{print $1}' |anew urls/live-js.txt
+
+rm js-tmp.txt
+rm ffuf-js
+
+#nipejs
+#....................
+
+cat urls/live-js.txt|nipejs -s -c 100 |anew nipejs
+
+#gfx Patterns on nipej
+#....................
+
+
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx xss |anew gf/xss.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ssrf |anew gf/ssrf.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx sqli |anew gf/sql.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx lfi |anew gf/lfi.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ssti |anew gf/ssti.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx redirect |anew gf/redirect.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx idor |anew gf/idor.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx ip |anew gf/ip.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx rce |anew gf/rce.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx s3-buckets |anew gf/s3-buckets.txt
+cat  nipejs  | grep http | sort -u|grep -o -E 'https?://[^"]+' |gfx upload-fields |anew gf/upload-fields.txt
+
+
+
+#js-downloading
+#....................
+
+
+mkdir -p urls/js-download/
+echo -e "\033[33m[+] Downloading js files  \033[m"
+cat urls/live-js.txt | xargs -P0 -n1 -I  {} wget -c "{}"  -P urls/js-download/
+
+
+
+#nuclei-fuzzing-urls
+#........................................................................................................................................
+echo -e "\033[33m[+] nuclei fuzzinng on url  \033[m"|notify -silent -bulk 
+cat urls/live-url.txt |uro|nuclei  -es info,low  -fuzz -t  ~/fuzzing-templates -t ~/nuclei-templates -o nuclei-fuzzing |notify -silent -bulk 
+
+
+
+#xss-urls-freq
+#........................................................................................................................................
+mkdir -p bugs
+
+cat urls/live-url.txt  | uro| grep "=" | qsreplace '"><img src=x onerror=alert(1)>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt|notify -silent -bulk 
+cat urls/live-url.txt |uro|grep "=" | qsreplace '"><script>alert(1)</script>' | freq | grep -iv "Not Vulnerable"|anew  bugs/xss.txt|notify -silent -bulk 
+
+
+
+#urls-crawling
+#........................................................................................................................................
+
+#shodan-ip
+#..............................................................................................................................................
+
+
+
+
+
+
+
+
+
+
+
