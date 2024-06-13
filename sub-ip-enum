@@ -2,8 +2,7 @@
 #..............................
 mkdir -p shodan ; chmod +rwx shodan/*
 
-
-cat wilecard singal | while read host ; do shodanx domain -to 20  -ra -d $host   -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "hostname:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl.cert.subject.cn:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "http.title:'$host'"  -o  shodan/ip.txt ;echo $host |cut -d'.' -f1|anew org ;done ; cat org | while read host ; do shodanx custom -to 20  -ra -cq "org:$host"  -o  shodan/ip.txt ; rm org ;uncover -q  ' "ssl:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ;uncover -q  ' "hostname:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt  ;uncover -q  ' "http.title:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ; done
+cat wilecard singal | while read host ; do shodanx domain -to 20  -ra -d $host   -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "hostname:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl.cert.subject.cn:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "http.title:'$host'"  -o  shodan/ip.txt ;echo $host |cut -d'.' -f1|anew org ;done ; cat org | while read host ; do shodanx custom -to 20  -ra -cq "org:$host"  -o  shodan/ip.txt ; rm org ;uncover -q  ' "ssl:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ;uncover -q  ' "hostname:$domain"'   -silent -e censys,shodan,zoomeye,netlas  |anew  shodan/ip.txt  ;uncover -q  ' "http.title:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ; done
 
 
 #favicon-hash
@@ -14,10 +13,16 @@ cat hash.txt| while read host ;do shodanx custom -to 20  -ra -cq "http.favicon.h
 
 #ip-filter
 #..............................
-cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/tmp.txt  ; done ;
 
 #ip-filter
-cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host -t 100 |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
+cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host -t 100 |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/tmp.txt  ; done ;
+
+#out-of-scop-filter
+cat shodan/tmp.txt |hakip2host -t 100 |inscope -s outscop.txt -r  |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  
+
+
+rm shodan/tmp.txt
 rm shodan/ip.txt ;sleep 5 ;
 
 
@@ -68,12 +73,13 @@ echo "sub-bruteforacing started  custom wordlist  " |notify -silent  -bulk ;
 puredns bruteforce  wordlist.txt -r ~/wordlist/resolvers.txt -d   $target  -w tmp.txt 
 echo "sub-bruteforacing done  custom wordlist  " |notify -silent  -bulk ;  
 
+cat tmp.txt | sort -u |sed 's/\*\.//g'|inscope -s outscop.txt -r|anew not-resolv.txt
 
-cat tmp.txt | sort -u  |sed 's/\*\.//g'|anew subdomain.txt
+#resolving-domains
+puredns resolve  not-resolv.txt  -r ~/wordlist/resolvers.txt |anew subdomain.txt
+
 rm tmp.txt 
-
-
-
+rm not-resolv.txt
 
 #sub-takeover
 #...................................
