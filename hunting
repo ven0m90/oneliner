@@ -62,6 +62,8 @@ echo  "done ips -->"   |notify -silent  -bulk ;
 #tmux
 tmux -a -t recon
 
+#s3-bucket
+
 
 #do all step by step 
 
