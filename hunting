@@ -31,25 +31,29 @@ cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -sile
 cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host  |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
 rm shodan/ip.txt ;sleep 5 ;
 
-  
+echo  "done ips -->"   |notify -silent  -bulk ;  
+
 #port-scan
 #........................................................................................................................................
 echo  "port scaning started ips -->"   |notify -silent  -bulk ;  
 cat shodan/ips.txt  |sort -u |naabu  -top-ports 1000  -silent|anew shodan/naabu.txt ;
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 #httpx
 echo "httpx started ips -->  " |notify -silent  -bulk ;  
 cat  shodan/naabu.txt |httpx  -silent|anew shodan/httpx.txt;
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 #httpx-tech-status
 echo "httpx tech started ips -->  " |notify -silent  -bulk ;  
 cat  shodan/httpx.txt |httpx -title -td -sc  -server -silent|anew shodan/httpx-tech.txt;
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 #nuclei-tech
 nuclei -ut
 echo "nuclei tech started ips -->  " |notify -silent  -bulk ;  
 cat shodan/httpx.txt | nuclei -t  ~/nuclei-templates/ -tags tech  -o  shodan/nuclei-tech.txt  |notify -silent  -bulk
-
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 #shodanx-ip uncover
 #................................................................................................................................
@@ -65,7 +69,9 @@ tmux -a -t recon
 export target=wilecard
 
 #passive-sub-enum
+echo  "sub enum passive started -->"   |notify -silent  -bulk ;  
 cat  $target |while read domain; do echo $domain|anew tmp.txt; python3 ~/tools/Sublist3r/sublist3r.py  -d $domain -o tmp.txt ; findomain  -t $domain -q | anew tmp.txt ; subfinder -all -d  $domain |anew tmp.txt ;shodanx subdomain -d $domain  -to 50 -ra -o tmp.txt ;  done
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 #download resolver
 rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
@@ -99,6 +105,7 @@ ffuf -c -w  -u
 
 ffuf -c  -u "https://FUZZ. srsecure.xyz" -w  ~/wordlist/dns/httparchive_subdomains_2024_05_28.txt  -v | grep "| URL |" | awk '
 {print $4}" | sed 's/^http[s]:/\///g' |anew tmp.txt 
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 cat tmp.txt | sort -u |sed 's/\*\.//g'|inscope -s outscop.txt -r|anew not-resolv.txt
 
@@ -106,13 +113,14 @@ cat tmp.txt | sort -u |sed 's/\*\.//g'|inscope -s outscop.txt -r|anew not-resolv
 
 #resolving-domains
 puredns resolve  not-resolv.txt  -r ~/wordlist/resolvers.txt |anew subdomain.txt
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 rm tmp.txt 
 rm not-resolv.txt
 
 #out-of-scop-filter
 cat shodan/tmp.txt |hakip2host  |inscope -s outscop.txt -r  |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  
-
+echo  "done ips -->"   |notify -silent  -bulk ;  
 
 
 #sub-takeover
