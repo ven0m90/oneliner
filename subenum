@@ -7,8 +7,9 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Define the base directory
+# Define the base directory and DNS wordlist
 BASE_DIR="/home/kali/recon"
+dnswordlist="~/wordlist/dns/httparchive_subdomains_2024_05_28.txt"
 
 echo -e "${GREEN}subenum started${NC}" | notify -silent -bulk
 
@@ -36,7 +37,7 @@ for dir in "$BASE_DIR"/*/; do
 
         # Run puredns bruteforce
         echo -e "${BLUE}Running puredns bruteforce${NC}" | notify -silent -bulk
-        puredns bruteforce ~/wordlist/dns/deepmagic.com-prefixes-top500.txt -r ~/wordlist/resolvers.txt -d "$dir/roots.txt" -w "$dir/tmp.txt"
+        puredns bruteforce "$dnswordlist" -r ~/wordlist/resolvers.txt -d "$dir/roots.txt" -w "$dir/tmp.txt"
 
         # Filter out-of-scope domains and notify
         echo -e "${BLUE}Filtering out-of-scope domains${NC}" | notify -silent -bulk
