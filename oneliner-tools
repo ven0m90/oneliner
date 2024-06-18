@@ -1,4 +1,14 @@
 
+echo scanning|notify -bulk use to scan subdomain takeovers with nuclei on list of subdomains use puredns for resolving subdomain   puredns resolve  subdomain_list  -r ~/wordlist/resolvers.txt and tools like cat sub.txt |naabu|anew port  tools use anew naabu httpx nuclei|notify -bulk with arguments of subdomains file and save output in txt
+
+
+make a bash script to run this script in every subdirectory of /home/kali/recon with colorful output with notify tools process like echo scanning|notify -bulk and  with domain name like  echo -e "${GREEN} started: dell" | notify -silent -bulk
+
+
+
+
+
+
 #oneliners-tools
 ...................................
 
