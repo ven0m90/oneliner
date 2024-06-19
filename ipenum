@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Check if the correct number of arguments are passed
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <targets_list>"
+    exit 1
+fi
+
+targets_list="$1"
+
+# Notify that the ipenum is starting
+echo "ipenum started" | notify -bulk
+
+# Perform ipenum using various tools
+cat "$targets_list" | while read target; do
+
+    mkdir -p shodan  # Ensure shodan directory exists
+    chmod +rwx shodan/*  # Adjust permissions on shodan directory contents (consider security implications)
+
+    echo "shodanx uncover started for $target" | notify -silent -bulk
+    
+    # Loop through each host in the target list
+    cat "$target" | while read host; do
+        # Perform shodanx commands for different queries and store results in shodan/ip.txt
+        shodanx domain -to 20 -ra -d "$host" -o shodan/ip.txt
+        shodanx custom -to 20 -ra -cq "ssl:$host" -o shodan/ip.txt
+        shodanx custom -to 20 -ra -cq "hostname:$host" -o shodan/ip.txt
+        shodanx custom -to 20 -ra -cq "ssl.cert.subject.cn:$host" -o shodan/ip.txt
+        shodanx custom -to 20 -ra -cq "http.title:'$host'" -o shodan/ip.txt
+        echo "$host" | cut -d'.' -f1 | anew org
+    done
+
+    # Loop through unique organizations found in org file and perform additional shodanx queries
+    cat org | while read host; do
+        shodanx custom -to 20 -ra -cq "org:$host" -o shodan/ip.txt
+        uncover -q "\"ssl:$host\"" -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
+        uncover -q "\"hostname:$host\"" -silent -e censys,shodan,zoomeye,netlas | anew shodan/ip.txt
+        uncover -q "\"http.title:$host\"" -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
+    done
+    rm org  # Clean up org file after use
+
+    # Perform favicon-hash extraction and additional shodanx queries based on hash results
+    cat "$target" | while read host; do
+        echo "$host" | httpx | python3 ~/tools/FavFreak/favfreak.py --shodan -o fav
+        ls fav/* | sed 's/fav\///' | sed 's/.txt//' | anew hash.txt
+    done
+    cat hash.txt | while read host; do
+        shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o shodan/ip.txt
+    done
+    rm hash.txt  # Clean up hash.txt and fav directory after use
+    rm -rf fav
+
+    # Perform IP filtering using tlsx and hakip2host
+    cat "$target" | while read host; do
+        cat shodan/ip.txt | tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+    done
+
+    cat "$target" | while read host; do
+        cat shodan/ip.txt | hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+    done
+
+    rm shodan/ip.txt  # Clean up ip.txt after IP filtering
+    sleep 5  # Wait for 5 seconds before proceeding to the next target
+
+done
+
+# Notify that the ipenum is done
+echo "ipenum done" | notify -bulk
