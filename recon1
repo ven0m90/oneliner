@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Check if the correct number of arguments are passed
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <targets_list>"
+    exit 1
+fi
+
+targets_list="$1"
+
+# Notify that the recon1 is starting
+echo "recon1 started" | notify -bulk
+
+# Perform subdomain enumeration using various tools
+cat "$targets_list" | while read target; do
+
+    echo "naabu started for $target" | notify -bulk
+    cat "$target" | sort -u | naabu -top-ports 1000 -silent | anew naabu.txt
+
+    echo "httpx started for $target" | notify -bulk
+    cat naabu.txt | httpx -silent | anew httpx.txt
+
+    echo "httpx asn started for $target" | notify -bulk
+    cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
+
+    echo "httpx tech started for $target" | notify -bulk
+    cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt
+
+    echo "nuclei tech started for $target" | notify -bulk
+    nuclei -ut
+    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags tech -o nuclei-tech.txt
+
+    echo "nuclei tech scan completed for $target" | notify -bulk
+
+done
+
+# Notify that the recon1 is done
+echo "recon1 done" | notify -bulk
