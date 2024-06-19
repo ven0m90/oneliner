@@ -1,68 +1,71 @@
 #!/bin/bash
 
-# Check if the correct number of arguments are passed
+# Function to display usage information
+usage() {
+    echo "Usage: $0 targets_file"
+    echo "Example: $0 targets.txt"
+}
+
+# Check if the number of arguments provided is not equal to 1
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <targets_list>"
+    echo "Error: Missing or too many arguments."
+    usage
     exit 1
 fi
 
-targets_list="$1"
+targets_file="$1"
 
-# Notify that the ipenum is starting
-echo "ipenum started" | notify -bulk
+# Ensure the shodan directory exists and is writable
+mkdir -p shodan
+chmod +rwx shodan/*
 
-# Perform ipenum using various tools
-cat "$targets_list" | while read target; do
+# Function to perform Shodan searches
+perform_shodan_search() {
+    local query="$1"
+    shodanx custom -to 20 -ra -cq "$query" -o shodan/ip.txt
+}
 
-    mkdir -p shodan  # Ensure shodan directory exists
-    chmod +rwx shodan/*  # Adjust permissions on shodan directory contents (consider security implications)
+# Main loop to process each target in the targets file
+cat "$targets_file" | while read host; do
+    # Perform various Shodan searches based on domain, SSL, hostname, etc.
+    perform_shodan_search "ssl:$host"
+    perform_shodan_search "hostname:$host"
+    perform_shodan_search "ssl.cert.subject.cn:$host"
+    perform_shodan_search "http.title:'$host'"
 
-    echo "shodanx uncover started for $target" | notify -silent -bulk
-    
-    # Loop through each host in the target list
-    cat "$target" | while read host; do
-        # Perform shodanx commands for different queries and store results in shodan/ip.txt
-        shodanx domain -to 20 -ra -d "$host" -o shodan/ip.txt
-        shodanx custom -to 20 -ra -cq "ssl:$host" -o shodan/ip.txt
-        shodanx custom -to 20 -ra -cq "hostname:$host" -o shodan/ip.txt
-        shodanx custom -to 20 -ra -cq "ssl.cert.subject.cn:$host" -o shodan/ip.txt
-        shodanx custom -to 20 -ra -cq "http.title:'$host'" -o shodan/ip.txt
-        echo "$host" | cut -d'.' -f1 | anew org
-    done
-
-    # Loop through unique organizations found in org file and perform additional shodanx queries
-    cat org | while read host; do
-        shodanx custom -to 20 -ra -cq "org:$host" -o shodan/ip.txt
-        uncover -q "\"ssl:$host\"" -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
-        uncover -q "\"hostname:$host\"" -silent -e censys,shodan,zoomeye,netlas | anew shodan/ip.txt
-        uncover -q "\"http.title:$host\"" -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
-    done
-    rm org  # Clean up org file after use
-
-    # Perform favicon-hash extraction and additional shodanx queries based on hash results
-    cat "$target" | while read host; do
-        echo "$host" | httpx | python3 ~/tools/FavFreak/favfreak.py --shodan -o fav
-        ls fav/* | sed 's/fav\///' | sed 's/.txt//' | anew hash.txt
-    done
-    cat hash.txt | while read host; do
-        shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o shodan/ip.txt
-    done
-    rm hash.txt  # Clean up hash.txt and fav directory after use
-    rm -rf fav
-
-    # Perform IP filtering using tlsx and hakip2host
-    cat "$target" | while read host; do
-        cat shodan/ip.txt | tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
-    done
-
-    cat "$target" | while read host; do
-        cat shodan/ip.txt | hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
-    done
-
-    rm shodan/ip.txt  # Clean up ip.txt after IP filtering
-    sleep 5  # Wait for 5 seconds before proceeding to the next target
-
+    # Extract organization name and perform organization-based searches
+    echo "$host" | cut -d'.' -f1 | anew org
 done
 
-# Notify that the ipenum is done
-echo "ipenum done" | notify -bulk
+# Process each organization and perform Shodan searches
+cat org | while read host; do
+    perform_shodan_search "org:$host"
+    rm org
+done
+
+# Use FavFreak to fetch favicons and perform related searches
+cat "$targets_file" | while read host; do
+    echo "$host" | httpx | python3 ~/tools/FavFreak/favfreak.py --shodan -o fav
+    ls fav/* | sed 's/fav\///; s/\.txt$//' | anew hash.txt
+done
+
+# Perform Shodan searches based on favicon hashes
+cat hash.txt | while read host; do
+    perform_shodan_search "http.favicon.hash:'$host'"
+    rm hash.txt
+    rm -rf fav/
+done
+
+# Filter and extract IPs from shodan/ip.txt
+cat "$targets_file" | while read host; do
+    cat shodan/ip.txt | tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+done
+
+# Perform additional IP extraction using hakip2host
+cat "$targets_file" | while read host; do
+    cat shodan/ip.txt | hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+done
+
+# Clean up temporary files
+rm shodan/ip.txt
+sleep 5
