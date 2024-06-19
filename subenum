@@ -1,86 +1,30 @@
-    echo -e "${GREEN}Passive subenum started: ${dir_name}${NC}"
-    send_notification "Passive subenum started for ${dir_name}"
+#!/bin/bash
 
-    # Ensure tmp directory exists
-    mkdir -p "$dir/tmp"
-
-    # Process each domain from roots.txt
-    while IFS= read -r domain; do
-        echo "$domain" | anew "$dir/tmp/sub-subfinder.txt"
-        python3 ~/tools/Sublist3r/sublist3r.py -d "$domain" -o "$dir/tmp/sub-sublist3r.txt"
-        findomain -t "$domain" -q | anew "$dir/tmp/sub-findomain.txt"
-        subfinder -all -d "$domain" | anew "$dir/tmp/sub-subfinder.txt"
-        shodanx subdomain -d "$domain" -to 50 -ra -o "$dir/tmp/sub-shodanx.txt"
-        print_dots &
-        dots_pid=$!
-        wait "$dots_pid"    
-    done < "$dir/roots.txt"
-
-    echo -e "${GREEN}Passive subenum finished: ${dir_name}${NC}"
-
-    # Update resolver.txt
-    echo -e "${BLUE}Updating resolver.txt${NC}"
-    send_notification "Updating resolver.txt"
-    rm -f ~/wordlist/resolvers.txt
-    curl -sS -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt >/dev/null 2>&1
-
-    # Run puredns bruteforce
-    echo -e "${BLUE}Running puredns bruteforce${NC}"
-    send_notification "Running puredns bruteforce"
-    puredns bruteforce "$dnswordlist" -r ~/wordlist/resolvers.txt -d "$dir/roots.txt" -w "$dir/tmp/sub-puredns.txt" >/dev/null 2>&1 &
-
-    # Filter out-of-scope domains with remout
-    echo -e "${BLUE}Filtering out-of-scope domains${NC}"
-    send_notification "Filtering out-of-scope domains"
-    cat "$dir/tmp/sub*.txt" | anew "$dir/all-not-remout.txt"
-    remout "$dir/all-not-remout.txt" "$dir/outscope.txt" "$dir/allsubdomains.txt"
-
-    # Check if outscope.txt exists, otherwise rename all-not-remout.txt
-    if [[ ! -f "$dir/outscope.txt" ]]; then
-        mv "$dir/all-not-remout.txt" "$dir/allsubdomains.txt"
-    fi
-
-    # Resolve domains
-    echo -e "${BLUE}Resolving domains${NC}"
-    send_notification "Resolving domains"
-    puredns resolve "$dir/allsubdomains.txt" -r ~/wordlist/resolvers.txt | anew "$dir/all-resolve-subdomains.txt"
-
-    # Perform port scanning
-    echo -e "${BLUE}Port scanning started${NC}"
-    send_notification "Port scanning started"
-    cat "$dir/all-resolve-subdomains.txt" | sort -u | naabu -top-ports 1000 -silent | anew "$dir/naabu.txt"
-
-    # Run httpx to detect web servers
-    echo -e "${BLUE}httpx started${NC}"
-    send_notification "Running httpx"
-    cat "$dir/naabu.txt" | httpx -silent | anew "$dir/httpx.txt"
-
-    # Gather detailed information using httpx
-    echo -e "${BLUE}httpx tech started${NC}"
-    send_notification "Gathering httpx tech info"
-    cat "$dir/httpx.txt" | httpx -title -td -sc -server -silent | anew "$dir/httpx-tech.txt"
-
-    # Perform ASN enumeration with httpx
-    echo -e "${BLUE}httpx ASN enum started${NC}"
-    send_notification "Performing ASN enumeration"
-    cat "$dir/httpx.txt" | httpx -asn -silent | anew "$dir/httpx-asn.txt"
-
-    # Run nuclei with tech templates
-    echo -e "${BLUE}Running nuclei tech templates${NC}"
-    send_notification "Running nuclei tech templates"
-    rm -rf ~/nuclei-templates
-    git clone -q https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
-    cat "$dir/httpx.txt" | nuclei -t ~/nuclei-templates/ -tags tech -o "$dir/nuclei-tech.txt" >/dev/null 2>&1 &
-
-    # Check for subdomain takeovers
-    echo -e "${GREEN}Subdomain takeover checking started${NC}"
-    send_notification "Checking for subdomain takeovers"
-    echo -e "${BLUE}Checking for subdomain takeovers${NC}"
-    mkdir -p "$dir/takeover"
-    curl -sS -L https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/8b2bc8ab8ef801d4342bb4ec4fedb5460296da29/subdomain-takeover/detect-all-takeovers.yaml -o ~/nuclei-templates/http/takeovers/detect-all-takeovers.yaml >/dev/null 2>&1
-    cat "$dir/all-resolve-subdomains.txt" | httpx | nuclei -t ~/nuclei-templates/http/takeovers/ -o "$dir/takeover/takeovers-nuclei.txt" >/dev/null 2>&1 &       
-
-else
-    echo -e "${RED}roots.txt not found in $dir${NC}"
-    send_notification "roots.txt not found in $dir"
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <targets_list>"
+    exit 1
 fi
+
+targets_list="$1"
+
+# Download the latest resolvers.txt file
+rm -f ~/wordlist/resolvers.txt
+curl -sS -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
+
+# Perform subdomain enumeration using various tools
+cat "$targets_list" | while read target; do
+    sublist3r -d "$target" | anew sublist3r_"$target".txt
+    findomain -t "$target" -u findomain_"$target".txt
+    subfinder -all -d "$target" -o subfinder_"$target".txt
+    shodanx subdomain -d "$target" -to 50 -ra -o shodan_"$target".txt
+    shuffledns -mode bruteforce -w ~/wordlist/dns/best-dns-wordlist.txt -r ~/wordlist/resolvers.txt -d "$target" -o shuffledns_bruteforce_"$target".txt
+done
+
+# Concatenate all subdomain enumeration results and process with shuffledns
+cat sublist3r_*.txt findomain_*.txt subfinder_*.txt shodan_*.txt shuffledns_bruteforce_*.txt | sed 's/\*\.\?//g' | sort -u | shuffledns -mode resolve -r ~/wordlist/resolvers.txt -o resolved_subdomains.txt
+
+# Clean up temporary files
+rm sublist3r_*.txt findomain_*.txt subfinder_*.txt shodan_*.txt shuffledns_bruteforce_*.txt
+
+# Notify completion
+echo "Subdomain enumeration done" | notify
