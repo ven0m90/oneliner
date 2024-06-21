@@ -1,69 +1,60 @@
 #!/bin/bash
 
-# Function to display usage information
-usage() {
-    echo "Usage: $0 targets_file"
-    echo "Example: $0 targets.txt"
-}
-
-# Check if the number of arguments provided is not equal to 1
-if [ $# -ne 1 ]; then
-    echo "Error: Missing or too many arguments."
-    usage
+# Ensure the script is invoked with at least one argument
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <target_list_file>"
     exit 1
 fi
 
-targets_file="$1"
+TARGET_LIST=$1
 
-# Ensure the shodan directory exists and is writable
+# Create necessary directories and set permissions
 mkdir -p shodan
-chmod +rwx shodan/*
+chmod +rwx shodan/
 
-# Function to perform Shodan searches
-perform_shodan_search() {
-    local query="$1"
-    shodanx custom -to 20 -ra -cq "$query" -o shodan/ip.txt
-}
+# Notify start of the process
+echo "shodanx uncover started ips -->" | notify -silent -bulk
 
-# Main loop to process each target in the targets file
-cat "$targets_file" | while read host; do
-    # Perform various Shodan searches based on domain, SSL, hostname, etc.
-    perform_shodan_search "ssl:$host"
-    perform_shodan_search "hostname:$host"
-    perform_shodan_search "ssl.cert.subject.cn:$host"
-    perform_shodan_search "http.title:'$host'"
-
-    # Extract organization name and perform organization-based searches
+# Iterate over each target in the list
+cat "$TARGET_LIST" | while read host; do
+    # Run shodanx commands for various queries and append results to shodan/ip.txt
+    shodanx domain -to 20 -ra -d "$host" -o shodan/ip.txt
+    shodanx custom -to 20 -ra -cq "ssl:$host" -o shodan/ip.txt
+    shodanx custom -to 20 -ra -cq "hostname:$host" -o shodan/ip.txt
+    shodanx custom -to 20 -ra -cq "ssl.cert.subject.cn:$host" -o shodan/ip.txt
+    shodanx custom -to 20 -ra -cq "http.title:'$host'" -o shodan/ip.txt
     echo "$host" | cut -d'.' -f1 | anew org
 done
 
-# Process each organization and perform Shodan searches
+# Iterate over each organization in the org file and perform shodanx queries
 cat org | while read host; do
-    perform_shodan_search "org:$host"
+    shodanx custom -to 20 -ra -cq "org:$host" -o shodan/ip.txt
     rm org
+    uncover -q '"ssl:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
+    uncover -q '"hostname:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
+    uncover -q '"http.title:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
 done
 
-# Use FavFreak to fetch favicons and perform related searches
-cat "$targets_file" | while read host; do
+# Perform favicon-hash operation using FavFreak and shodanx
+cat "$TARGET_LIST" | while read host; do
     echo "$host" | httpx | python3 ~/tools/FavFreak/favfreak.py --shodan -o fav
-    ls fav/* | sed 's/fav\///; s/\.txt$//' | anew hash.txt
+    ls fav/* | tr -d fav/ | tr -d .txt | anew hash.txt
 done
 
-# Perform Shodan searches based on favicon hashes
 cat hash.txt | while read host; do
-    perform_shodan_search "http.favicon.hash:'$host'"
+    shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o shodan/ip.txt
     rm hash.txt
     rm -rf fav/
 done
 
-# Filter and extract IPs from shodan/ip.txt
-cat "$targets_file" | while read host; do
-    cat shodan/ip.txt | tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+# Filter IPs from shodan/ip.txt based on host list
+cat "$TARGET_LIST" | while read host; do
+    cat shodan/ip.txt | sort -u|tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
 done
 
-# Perform additional IP extraction using hakip2host
-cat "$targets_file" | while read host; do
-    cat shodan/ip.txt | hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+# Additional IP filtering using hakip2host
+cat "$TARGET_LIST" | while read host; do
+    cat shodan/ip.txt |sort -u| hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
 done
 
 # Clean up temporary files
