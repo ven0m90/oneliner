@@ -29,9 +29,9 @@ cat "$targets_list" | while read target; do
     echo "screenshoting started for $target" | notify -bulk
     cat httpx.txt |aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 
 
-    echo "nuclei tech started for $target" | notify -bulk
-    nuclei -ut
-    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-tech.txt
+    echo "nuclei info,tech started for $target" | notify -bulk
+    nuclei -ut;
+    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt
 
     echo "nuclei info,tech scan completed for $target" | notify -bulk
 
