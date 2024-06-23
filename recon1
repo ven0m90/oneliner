@@ -1,41 +1,44 @@
 #!/bin/bash
 
-# Check if the correct number of arguments are passed
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <targets_list>"
+# Check if the domains list argument is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <domains_list>"
     exit 1
 fi
 
-targets_list="$1"
+# Assign the domains list argument to a variable
+domains_list="$1"
 
-# Notify that the recon1 is starting
+# Notify that recon1 is starting
 echo "recon1 started" | notify -bulk
 
-# Perform subdomain enumeration using various tools
-cat "$targets_list" | while read target; do
+# Notify and run naabu
+echo "naabu started for $domains_list" | notify -bulk
+cat "$domains_list" | sort -u | naabu | anew naabu.txt
 
-    echo "naabu started for $target" | notify -bulk
-    cat "$target" | sort -u | naabu | anew naabu.txt
+# Notify and run httpx
+echo "httpx started for $domains_list" | notify -bulk
+cat naabu.txt | httpx -silent | anew httpx.txt
 
-    echo "httpx started for $target" | notify -bulk
-    cat naabu.txt | httpx -silent | anew httpx.txt
+# Notify and run httpx with ASN
+echo "httpx asn started for $domains_list" | notify -bulk
+cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
 
-    echo "httpx asn started for $target" | notify -bulk
-    cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
+# Notify and run httpx with technology detection
+echo "httpx tech started for $domains_list" | notify -bulk
+cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt
 
-    echo "httpx tech started for $target" | notify -bulk
-    cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt
+# Notify and run aquatone for screenshots
+echo "screenshoting started for $domains_list" | notify -bulk
+cat httpx.txt | aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000
 
-    echo "screenshoting started for $target" | notify -bulk
-    cat httpx.txt |aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 
+# Notify and run nuclei for info and tech
+echo "nuclei info,tech started for $domains_list" | notify -bulk
+nuclei -ut
+cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt
 
-    echo "nuclei info,tech started for $target" | notify -bulk
-    nuclei -ut;
-    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt
+# Notify that nuclei scan is completed
+echo "nuclei info,tech scan completed for $domains_list" | notify -bulk
 
-    echo "nuclei info,tech scan completed for $target" | notify -bulk
-
-done
-
-# Notify that the recon1 is done
+# Notify that recon1 is done
 echo "recon1 done" | notify -bulk
