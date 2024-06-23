@@ -15,7 +15,7 @@ echo "recon1 started" | notify -bulk
 cat "$targets_list" | while read target; do
 
     echo "naabu started for $target" | notify -bulk
-    cat "$target" | sort -u | naabu -top-ports 1000 -silent | anew naabu.txt
+    cat "$target" | sort -u | naabu | anew naabu.txt
 
     echo "httpx started for $target" | notify -bulk
     cat naabu.txt | httpx -silent | anew httpx.txt
@@ -26,11 +26,14 @@ cat "$targets_list" | while read target; do
     echo "httpx tech started for $target" | notify -bulk
     cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt
 
+    echo "screenshoting started for $target" | notify -bulk
+    cat httpx.txt |aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 
+
     echo "nuclei tech started for $target" | notify -bulk
     nuclei -ut
-    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags tech -o nuclei-tech.txt
+    cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-tech.txt
 
-    echo "nuclei tech scan completed for $target" | notify -bulk
+    echo "nuclei info,tech scan completed for $target" | notify -bulk
 
 done
 
