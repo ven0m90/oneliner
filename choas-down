@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Download the JSON index file
+wget -q "https://chaos-data.projectdiscovery.io/index.json" -O index.json
+
+# Extract URLs and download files
+jq -r '.[] | .URL' index.json | while read -r url; do
+    wget -q "$url"
+done
+
+# Unzip all downloaded .zip files
+for zip_file in *.zip; do
+    unzip -q "$zip_file"
+done
+
+# Remove all .zip files
+rm *.zip
+
+# Process .txt files and remove duplicates
+cat *.txt | sed 's/\*\.\([^.]*\)/\1/g' | sort -u > output/allsub.txt
+
+# Clean up intermediate files
+rm *.txt
+rm index.json
