@@ -49,12 +49,12 @@ done
 
 # Filter IPs from shodan/ip.txt based on host list
 cat "$TARGET_LIST" | while read host; do
-    cat shodan/ip.txt | sort -u|tlsx -san -cn -silent | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+    cat shodan/ip.txt | sort -u|tlsx -san -cn -silent |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
 done
 
 # Additional IP filtering using hakip2host
 cat "$TARGET_LIST" | while read host; do
-    cat shodan/ip.txt |sort -u| hakip2host | grep "$host" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+    cat shodan/ip.txt |sort -u| hakip2host |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
 done
 
 # Clean up temporary files
