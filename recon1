@@ -28,6 +28,10 @@ cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
 echo "httpx tech started for $domains_list" | notify -bulk
 cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt | notify -bulk -silent
 
+# Notify and run aquatone
+echo "screenshoting started for $domains_list" | notify -bulk
+cat httpx.txt | aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 -ports xlarge
+
 # Notify and run nuclei for info and tech
 echo "nuclei info,tech started for $domains_list" | notify -bulk
 nuclei -ut
