@@ -20,16 +20,8 @@ cat "$TARGET_LIST" | while read host; do
     # Run shodanx commands for various queries and append results to shodan/ip.txt
     shodanx domain -to 20 -ra -d "$host" -o shodan/ip.txt
     shodanx custom -to 20 -ra -cq "ssl:$host" -o shodan/ip.txt
-    shodanx custom -to 20 -ra -cq "hostname:$host" -o shodan/ip.txt
-    shodanx custom -to 20 -ra -cq "ssl.cert.subject.cn:$host" -o shodan/ip.txt
     shodanx custom -to 20 -ra -cq "http.title:'$host'" -o shodan/ip.txt
-    echo "$host" | cut -d'.' -f1 | anew org
-done
 
-# Iterate over each organization in the org file and perform shodanx queries
-cat org | while read host; do
-    shodanx custom -to 20 -ra -cq "org:$host" -o shodan/ip.txt
-    rm org
     uncover -q '"ssl:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
     uncover -q '"hostname:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
     uncover -q '"http.title:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
@@ -50,11 +42,6 @@ done
 # Filter IPs from shodan/ip.txt based on host list
 cat "$TARGET_LIST" | while read host; do
     cat shodan/ip.txt | sort -u|tlsx -san -cn -silent |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
-done
-
-# Additional IP filtering using hakip2host
-cat "$TARGET_LIST" | while read host; do
-    cat shodan/ip.txt |sort -u| hakip2host |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
 done
 
 # Clean up temporary files
