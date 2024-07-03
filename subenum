@@ -8,8 +8,8 @@ fi
 
 targets_list="$1"
 
-# Notify that the subdomain enumeration is starting
-echo "Subdomain enumeration started" | notify
+# notify -silent that the subdomain enumeration is starting
+echo "Subdomain enumeration started" | notify -silent
 
 # Set up necessary directories
 mkdir -p ~/nuclei-templates/http/takeovers takeover
@@ -36,14 +36,14 @@ cat sublist3r_*.txt findomain_*.txt subfinder_*.txt shodan_*.txt shuffledns_brut
 # Clean up temporary files
 rm sublist3r_*.txt findomain_*.txt subfinder_*.txt shodan_*.txt shuffledns_bruteforce_*.txt
 
-# Notify that nuclei takeover is starting
-echo "nuclei takeover started" | notify
+# notify -silent that nuclei takeover is starting
+echo "nuclei takeover started" | notify -silent
 
 # Run Nuclei for subdomain takeover detection
 cat resolved_subdomains.txt | httpx | nuclei -t ~/nuclei-templates/http/takeovers/ -o takeover/nuclei-takeover.txt
 
-# Notify completion and send notifications for detected takeovers
-cat takeover/nuclei-takeover.txt | notify -bulk
+# notify -silent completion and send notifications for detected takeovers
+cat takeover/nuclei-takeover.txt | notify -silent -bulk
 
-# Notify that the subdomain enumeration is done
-echo "Subdomain enumeration done" | notify
+# notify -silent that the subdomain enumeration is done
+echo "Subdomain enumeration done" | notify -silent
