@@ -9,36 +9,36 @@ fi
 # Assign the domains list argument to a variable
 domains_list="$1"
 
-# Notify that recon1 is starting
-echo "recon1 started" | notify -bulk
+# notify -silent that recon1 is starting
+echo "recon1 started" | notify -silent -bulk
 
-# Notify and run naabu
-echo "naabu started for $domains_list" | notify -bulk
+# notify -silent and run naabu
+echo "naabu started for $domains_list" | notify -silent -bulk
 cat "$domains_list" | sort -u | naabu | anew naabu.txt
 
-# Notify and run httpx
-echo "httpx started for $domains_list" | notify -bulk
+# notify -silent and run httpx
+echo "httpx started for $domains_list" | notify -silent -bulk
 cat naabu.txt | httpx -silent | anew httpx.txt
 
-# Notify and run httpx with ASN
-echo "httpx asn started for $domains_list" | notify -bulk
+# notify -silent and run httpx with ASN
+echo "httpx asn started for $domains_list" | notify -silent -bulk
 cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
 
-# Notify and run httpx with technology detection
-echo "httpx tech started for $domains_list" | notify -bulk
-cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt | notify -bulk -silent
+# notify -silent and run httpx with technology detection
+echo "httpx tech started for $domains_list" | notify -silent -bulk
+cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt | notify -silent -bulk 
 
-# Notify and run aquatone
-echo "screenshoting started for $domains_list" | notify -bulk
+# notify -silent and run aquatone
+echo "screenshoting started for $domains_list" | notify -silent -bulk
 cat httpx.txt | aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 -ports xlarge
 
-# Notify and run nuclei for info and tech
-#echo "nuclei info,tech started for $domains_list" | notify -bulk
+# notify -silent and run nuclei for info and tech
+#echo "nuclei info,tech started for $domains_list" | notify -silent -bulk
 #nuclei -ut
-#cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt | notify -bulk -silent
+#cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt | notify -silent -bulk 
 
-# Notify that nuclei scan is completed
-#echo "nuclei info,tech scan completed for $domains_list" | notify -bulk
+# notify -silent that nuclei scan is completed
+#echo "nuclei info,tech scan completed for $domains_list" | notify -silent -bulk
 
-# Notify that recon1 is done
-echo "recon1 done" | notify -bulk
+# notify -silent that recon1 is done
+echo "recon1 done" | notify -silent -bulk
