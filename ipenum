@@ -9,9 +9,6 @@ fi
 TARGET_LIST=$1
 
 # Create necessary directories and set permissions
-mkdir -p shodan
-chmod +rwx 
-
 # Notify start of the process
 echo "shodanx uncover started ips -->" | notify -silent -bulk
 
@@ -34,8 +31,8 @@ cat "$TARGET_LIST" | while read host; do
 done
 
 cat hash.txt | while read host; do
-    shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o ip.txt
-    rm hash.txt
+    shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o ip.txt  ;
+    rm hash.txt ;
     rm -rf fav/
 done
 
