@@ -10,21 +10,21 @@ TARGET_LIST=$1
 
 # Create necessary directories and set permissions
 mkdir -p shodan
-chmod +rwx shodan/
+chmod +rwx 
 
 # Notify start of the process
 echo "shodanx uncover started ips -->" | notify -silent -bulk
 
 # Iterate over each target in the list
 cat "$TARGET_LIST" | while read host; do
-    # Run shodanx commands for various queries and append results to shodan/ip.txt
-    shodanx domain -to 20 -ra -d "$host" -o shodan/ip.txt
-    shodanx custom -to 20 -ra -cq "ssl:$host" -o shodan/ip.txt
-    shodanx custom -to 20 -ra -cq "http.title:'$host'" -o shodan/ip.txt
+    # Run shodanx commands for various queries and append results to ip.txt
+    shodanx domain -to 20 -ra -d "$host" -o ip.txt
+    shodanx custom -to 20 -ra -cq "ssl:$host" -o ip.txt
+    shodanx custom -to 20 -ra -cq "http.title:'$host'" -o ip.txt
 
-    uncover -q '"ssl:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
-    uncover -q '"hostname:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
-    uncover -q '"http.title:$domain"' -silent -e shodan,zoomeye,netlas | anew shodan/ip.txt
+    uncover -q '"ssl:$domain"' -silent -e shodan,zoomeye,netlas | anew ip.txt
+    uncover -q '"hostname:$domain"' -silent -e shodan,zoomeye,netlas | anew ip.txt
+    uncover -q '"http.title:$domain"' -silent -e shodan,zoomeye,netlas | anew ip.txt
 done
 
 # Perform favicon-hash operation using FavFreak and shodanx
@@ -34,15 +34,15 @@ cat "$TARGET_LIST" | while read host; do
 done
 
 cat hash.txt | while read host; do
-    shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o shodan/ip.txt
+    shodanx custom -to 20 -ra -cq "http.favicon.hash:'$host'" -o ip.txt
     rm hash.txt
     rm -rf fav/
 done
 
-# Filter IPs from shodan/ip.txt based on host list
+# Filter IPs from ip.txt based on host list
 cat "$TARGET_LIST" | while read host; do
-    cat shodan/ip.txt | sort -u|tlsx -san -cn -silent |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew shodan/ips.txt
+    cat ip.txt | sort -u|tlsx -san -cn -silent |grep  -F $host | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | anew ips.txt
 done
 
 # Clean up temporary files
-rm shodan/ip.txt
+rm ip.txt
