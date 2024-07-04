@@ -1,44 +1,128 @@
 #!/bin/bash
 
-# Check if the domains list argument is provided
-if [ -z "$1" ]; then
-    echo "Usage: $0 <domains_list>"
+# Ensure the script is invoked with at least one argument
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <target_list_file>"
     exit 1
 fi
 
-# Assign the domains list argument to a variable
-domains_list="$1"
+TARGET_LIST=$1
 
-# notify -silent that recon1 is starting
-echo "recon1 started" | notify -silent -bulk
+# Create necessary directories and set permissions
+mkdir -p results fav takeover
+chmod 755 results fav takeover
 
-# notify -silent and run naabu
-echo "naabu started for $domains_list" | notify -silent -bulk
-cat "$domains_list" | sort -u | naabu | anew naabu.txt
+# Check for required commands
+commands=("shodanx" "uncover" "httpx" "python3" "anew" "tlsx" "sublist3r" "findomain" "subfinder" "shuffledns" "subdominator" "subgomain" "subzy" "naabu" "aquatone" "nuclei")
+for cmd in "${commands[@]}"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "$cmd could not be found, please install it before running the script."
+        exit 1
+    fi
+done
 
-# notify -silent and run httpx
-echo "httpx started for $domains_list" | notify -silent -bulk
-cat naabu.txt | httpx -silent | anew httpx.txt
+# Notify start of Recon1
+echo "Recon1 started" | notify -silent -bulk
 
-# notify -silent and run httpx with ASN
-echo "httpx asn started for $domains_list" | notify -silent -bulk
-cat httpx.txt | httpx -asn -silent | anew httpx-asn.txt
+# Notify start of IP finding
+echo "IP finding started" | notify -silent
 
-# notify -silent and run httpx with technology detection
-echo "httpx tech started for $domains_list" | notify -silent -bulk
-cat httpx.txt | httpx -title -td -sc -server -silent | anew httpx-tech.txt | notify -silent -bulk 
+# Iterate over each target in the list for IP finding
+cat "$TARGET_LIST" | while read -r host; do
+    shodanx domain -ra -d "$host" -o results/ip.txt
+    shodanx custom -ra -cq "ssl:$host" -o results/ip.txt
+    shodanx custom -ra -cq "http.title:'$host'" -o results/ip.txt
+    uncover -q '"ssl:$host"' -silent -e shodan,zoomeye,netlas | anew results/ip.txt
+    uncover -q '"hostname:$host"' -silent -e shodan,zoomeye,netlas | anew results/ip.txt
+    uncover -q '"http.title:$host"' -silent -e shodan,zoomeye,netlas | anew results/ip.txt
+done
 
-# notify -silent and run aquatone
-echo "screenshoting started for $domains_list" | notify -silent -bulk
-cat httpx.txt | aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 -ports xlarge
+# Perform favicon-hash operation using FavFreak and shodanx
+cat "$TARGET_LIST" | while read -r host; do
+    echo "$host" | httpx | python3 ~/tools/FavFreak/favfreak.py --shodan -o fav
+    ls fav/* | tr -d 'fav/' | tr -d '.txt' | anew results/hash.txt
+done
 
-# notify -silent and run nuclei for info and tech
-#echo "nuclei info,tech started for $domains_list" | notify -silent -bulk
-#nuclei -ut
-#cat httpx.txt | nuclei -t ~/nuclei-templates/ -tags info,tech -o nuclei-info-tech.txt | notify -silent -bulk 
+cat results/hash.txt | while read -r hash; do
+    shodanx custom -ra -cq "http.favicon.hash:'$hash'" -o results/ip.txt
+done
 
-# notify -silent that nuclei scan is completed
-#echo "nuclei info,tech scan completed for $domains_list" | notify -silent -bulk
+# Filter IPs from ip.txt based on host list
+cat "$TARGET_LIST" | while read -r host; do
+    cat results/ip.txt | sort -u | tlsx -san -cn -silent | grep -F "$host" | grep -E -o '([0-9]{1,3}\.){3}[0-9]{1,3}' | anew results/ips.txt
+done
 
-# notify -silent that recon1 is done
-echo "recon1 done" | notify -silent -bulk
+# Clean up temporary files
+rm results/ip.txt results/hash.txt
+rm -rf fav/
+
+# Notify start of subdomain enumeration
+echo "Subdomain enumeration started" | notify -silent
+
+# Download the latest subdomain takeover template for Nuclei
+mkdir -p ~/nuclei-templates/http/takeovers
+curl -sS -L https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/8b2bc8ab8ef801d4342bb4ec4fedb5460296da29/subdomain-takeover/detect-all-takeovers.yaml -o ~/nuclei-templates/http/takeovers/detect-all-takeovers.yaml
+
+# Download the latest resolvers.txt file
+mkdir -p ~/wordlist
+curl -sS -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
+
+# Perform subdomain enumeration using various tools
+cat "$TARGET_LIST" | while read -r target; do
+    sublist3r -d "$target" | anew results/sublist3r_"$target".txt
+    findomain -t "$target" -u results/findomain_"$target".txt
+    subfinder -all -d "$target" -o results/subfinder_"$target".txt
+    shodanx subdomain -d "$target" -to 50 -ra -o results/shodan_"$target".txt
+    shuffledns -mode bruteforce -w ~/wordlist/dns/subdomain_megalist.txt -r ~/wordlist/resolvers.txt -d "$target" -o results/shuffledns_bruteforce_"$target".txt
+done
+
+# Concatenate all subdomain enumeration results and process with shuffledns
+cat results/sublist3r_*.txt results/findomain_*.txt results/subfinder_*.txt results/shodan_*.txt results/shuffledns_bruteforce_*.txt | sed 's/\*\.\?//g' | sort -u | shuffledns -mode resolve -r ~/wordlist/resolvers.txt -o results/resolved_subdomains.txt
+
+# Clean up temporary files
+rm results/sublist3r_*.txt results/findomain_*.txt results/subfinder_*.txt results/shodan_*.txt results/shuffledns_bruteforce_*.txt
+
+# Notify start of subdomain takeover detection
+echo "Subdomain takeover detection started" | notify -silent
+
+# Run subdominator
+echo "Subdominator started" | notify -silent
+subdominator -l results/resolved_subdomains.txt -o takeover/subdominator | notify -silent -bulk;
+rm  custom_fingerprints.json fingerprints.json    
+
+# Run subgomain
+echo "Subgomain started" | notify -silent
+subgomain -domains results/resolved_subdomains.txt -threads 50 -fingerprints https://raw.githubusercontent.com/EdOverflow/can-i-take-over-xyz/master/fingerprints.json -silent | anew takeover/subgomain
+
+# Notify completion of subgomain
+cat takeover/subgomain | notify -silent -bulk
+
+# Run subzy
+echo "Subzy started" | notify -silent
+subzy run --targets results/resolved_subdomains.txt --hide_fails --vuln --output takeover/subzy.json | notify -silent -bulk
+
+# Notify start of naabu
+echo "Naabu started" | notify -silent
+cat results/resolved_subdomains.txt results/ips.txt | sort -u | naabu | anew results/naabu.txt
+
+# Run httpx
+echo "Httpx started" | notify -silent
+cat results/naabu.txt | httpx -silent | anew results/httpx.txt
+
+# Run httpx with ASN
+cat results/httpx.txt | httpx -asn -silent | anew results/httpx-asn.txt
+
+# Run httpx with technology detection
+cat results/httpx.txt | httpx -title -td -sc -server -silent | anew results/httpx-tech.txt | notify -silent -bulk
+
+# Run Aquatone for screenshots
+echo "Screenshoting started" | notify -silent
+cat results/httpx.txt | aquatone -out screenshot -scan-timeout 200 -screenshot-timeout 60000 -ports xlarge
+
+# Run nuclei with technology detection
+echo "Nuclei tech started" | notify -silent
+nuclei -ut
+cat results/httpx.txt | nuclei -t technologies/tech-detect.yaml -o results/nuclei-tech.txt | notify -silent -bulk
+
+# Notify completion of Recon1
+echo "Recon1 completed" | notify -silent -bulk
