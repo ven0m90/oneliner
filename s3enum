@@ -13,7 +13,11 @@ https://3bodymo.medium.com/how-i-earned-by-amazon-s3-bucket-misconfigurations-29
 
  echo "s3 bucket checking started" | notify -bulk 
  mkdir -p s3
- cat nuclei-tech.txt or ips-nuclei-tech| grep s3 |grep -Eo '(http|https)://[^"]+'|
+httpx -silent -webserver -threads 100 -match-string "AccessDenied"
+grep AmazonS3
+
+cat nuclei-info-tech.txt|grep s3 |grep -Eo '(http|https)://[^"]+'|unfurl domain|httpx
+
 
  #google dorks
  ghdb
