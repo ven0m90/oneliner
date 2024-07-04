@@ -1,87 +1,11 @@
-#hunting on ip
-...............
-#do all step by step 
-
 #tmux
 tmux new -s recon
 
-nano  wilecard
-nano  outscop.txt
-nano singal
-
-
-#shodanx-ip uncover
-#..............................
-mkdir -p shodan ; chmod +rwx shodan/*
-echo  "shodanx uncover started ips -->"   |notify -silent  -bulk ;  
-cat wilecard singal | while read host ; do shodanx domain -to 20  -ra -d $host   -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "hostname:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "ssl.cert.subject.cn:$host"  -o  shodan/ip.txt ; shodanx custom -to 20  -ra -cq "http.title:'$host'"  -o  shodan/ip.txt ;echo $host |cut -d'.' -f1|anew org ;done ; cat org | while read host ; do shodanx custom -to 20  -ra -cq "org:$host"  -o  shodan/ip.txt ; rm org ;uncover -q  ' "ssl:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ;uncover -q  ' "hostname:$domain"'   -silent -e censys,shodan,zoomeye,netlas  |anew  shodan/ip.txt  ;uncover -q  ' "http.title:$domain"'   -silent -e shodan,zoomeye,netlas  |anew  shodan/ip.txt ; done
-
-
-#favicon-hash
-cat wilecard singal | while read host ;do echo $host|httpx |python3 ~/tools/FavFreak/favfreak.py --shodan -o fav ;ls  fav/* |tr -d fav/|tr -d .txt |anew hash.txt ;done ; 
-cat hash.txt| while read host ;do shodanx custom -to 20  -ra -cq "http.favicon.hash:'$host'"  -o  shodan/ip.txt ;rm hash.txt ;rm -rf fav/ ;done
-
-
-
-#ip-filter
-#..............................
-cat wilecard singal | while read host ;do cat shodan/ip.txt |tlsx -san -cn -silent |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
-
-#ip-filter
-cat wilecard singal | while read host ;do cat shodan/ip.txt |hakip2host  |grep $host |grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' |anew shodan/ips.txt  ; done ;
-rm shodan/ip.txt ;sleep 5 ;
-
-echo  "done ips -->"   |notify -silent  -bulk ;  
-
-#port-scan
-#........................................................................................................................................
-echo  "port scaning started ips -->"   |notify -silent  -bulk ;  
-cat shodan/ips.txt  |sort -u |naabu  -top-ports 1000  -silent|anew shodan/naabu.txt ;
-echo  "done ips -->"   |notify -silent  -bulk ;  
-
-#httpx
-echo "httpx started ips -->  " |notify -silent  -bulk ;  
-cat  shodan/naabu.txt |httpx  -silent|anew shodan/httpx.txt;
-echo  "done ips -->"   |notify -silent  -bulk ;  
-
-#httpx-tech-status
-echo "httpx tech started ips -->  " |notify -silent  -bulk ;  
-cat  shodan/httpx.txt |httpx -title -td -sc  -server -silent|anew shodan/httpx-tech.txt;
-echo  "done ips -->"   |notify -silent  -bulk ;  
-
-#nuclei-tech
-nuclei -ut
-echo "nuclei tech started ips -->  " |notify -silent  -bulk ;  
-cat shodan/httpx.txt | nuclei -t  ~/nuclei-templates/ -tags tech  -o  shodan/nuclei-tech.txt  |notify -silent  -bulk
-echo  "done ips -->"   |notify -silent  -bulk ;  
-
-#shodanx-ip uncover
-#................................................................................................................................
-
-
-#tmux
-tmux -a -t recon
-
-#s3-bucket
-
-
-#do all step by step 
-
-#asn enumeration
-#........................................................................................................................................
-cat  httpx.txt   |  dnsx  -asn -silent | anew asn-number.txt
 
 search asn on shodan and use facet analysis or use shodanx with httpx nuclei
 http.title like index of / dirttory lisning spend time you can find critical 
 port you find intersting port
 redis.key
-
-
-
-
-
-
-
 
 
 
@@ -132,52 +56,16 @@ run all ips and subdomains.txt
 
 
 
+#mass hunting
+open redirect
+paramspider openredirex
 
 
+#wpscan
+
+cat site| while read d ; do wpscan  --force  --scope  --rua  -e u --api-token NrZ3QLaKW3F4WSnL4t2bLPEaqwoxySWvtDTxEnmJSBs  -P   --stealthy --url $d ;done
 
 
-
-
-
-
-
-
-
-
-
-
-#nuclei-cve
-#........................................................................................................................................
-
-
-#downloading-latest-template
-rm -rf  ~/nuclei-templates
-git clone https://github.com/projectdiscovery/nuclei-templates.git  ~/nuclei-templates
-
-echo "nuclei  started --> shodan/httpx.txt" |notify -silent  -bulk ;  
-cat shodan/httpx.txt|nuclei  ~/nuclei-templates -o nuclei.txt  |notify -silent  -bulk
-
-#nuclei-custom
-
-cent -p ~/cent-nuclei-templates
-cent update -p ~/cent-nuclei-templates -d
-cent update -p ~/cent-nuclei-templates -f
-
-echo "nuclei cve started --> shodan/httpx.txt" |notify -silent  -bulk ;  
-cat shodan/httpx.txt|nuclei -t ~/cent-nuclei-templates  -tags cve -o nuclei-cve.txt  |notify -silent  -bulk
-
-
-
-
-  
-
-
-#next day work beacuse nuclei take time to scan if you have hug target than to these step after nuclei complate
-
-#screenshot
-#........................................................................................................................................
-echo "screenshoting started ips -->  " |notify -silent  -bulk ;  
-cat shodan/httpx.txt| aquatone -out  shodan/screenshot -scan-timeout 200 -screenshot-timeout 60000 ;
 
 #vulners-cve-nmap
 #........................................................................................................................................
