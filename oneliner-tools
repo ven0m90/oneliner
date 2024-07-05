@@ -116,8 +116,10 @@ ffuf  -w ~/wordlist/eng-list.txt -mc 200,302  -u https://redwolf.in/FUZZ.php
 
 #wpscan
 #..............................................................................................................................................
+use domain if ip not work
 
-wpscan    --force  --scope  --rua -e vt,vp  --api-token NrZ3QLaKW3F4WSnL4t2bLPEaqwoxySWvtDTxEnmJSBs --ignore-main-redirect --url  
+wpscan -e u  --disable-tls-checks  --ignore-main-redirect --url https://162.241.30.104/wp-json/wp/v2/users/
+
 
 
 #bypass 403
