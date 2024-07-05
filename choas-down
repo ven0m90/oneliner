@@ -1,24 +1,69 @@
 #!/bin/bash
 
+# Define output directory
+output_dir="output"
+mkdir -p "$output_dir"
+
+echo "Downloading the JSON index file..."
 # Download the JSON index file
 wget -q "https://chaos-data.projectdiscovery.io/index.json" -O index.json
+if [ $? -eq 0 ]; then
+    echo "Index file downloaded successfully."
+else
+    echo "Failed to download index file."
+    exit 1
+fi
 
+echo "Extracting URLs from the index file..."
 # Extract URLs and download files
 jq -r '.[] | .URL' index.json | while read -r url; do
+    echo "Downloading $url..."
     wget -q "$url"
+    if [ $? -eq 0 ]; then
+        echo "Downloaded $url successfully."
+    else
+        echo "Failed to download $url."
+    fi
 done
 
+echo "Unzipping all downloaded .zip files..."
 # Unzip all downloaded .zip files
 for zip_file in *.zip; do
-    unzip -q "$zip_file"
+    echo "Unzipping $zip_file..."
+    unzip -q "$zip_file" -d "$output_dir"
+    if [ $? -eq 0 ]; then
+        echo "$zip_file unzipped successfully."
+    else
+        echo "Failed to unzip $zip_file."
+    fi
 done
 
+echo "Cleaning up .zip files..."
 # Remove all .zip files
 rm *.zip
+if [ $? -eq 0 ]; then
+    echo "All .zip files removed."
+else
+    echo "Failed to remove .zip files."
+fi
 
+echo "Processing .txt files and removing duplicates..."
 # Process .txt files and remove duplicates
-cat *.txt | sed 's/\*\.\([^.]*\)/\1/g' | sort -u > output/allsub.txt
+cat "$output_dir"/*.txt | sed 's/\*\.\([^.]*\)/\1/g' | sort -u > "$output_dir/allsub.txt"
+if [ $? -eq 0 ]; then
+    echo "Processed .txt files and removed duplicates."
+else
+    echo "Failed to process .txt files."
+fi
 
+echo "Cleaning up intermediate .txt files and index file..."
 # Clean up intermediate files
-rm *.txt
+rm "$output_dir"/*.txt
 rm index.json
+if [ $? -eq 0 ]; then
+    echo "Intermediate files cleaned up."
+else
+    echo "Failed to clean up intermediate files."
+fi
+
+echo "Script execution completed."
