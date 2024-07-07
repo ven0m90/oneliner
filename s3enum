@@ -9,7 +9,9 @@ https://buckets.grayhatwarfare.com/
  
 https://3bodymo.medium.com/how-i-earned-by-amazon-s3-bucket-misconfigurations-29d51ee510de
 
+https://medium.com/@hareleilon/hunting-after-secrets-accidentally-uploaded-to-public-s3-buckets-7e5bbbb80097
 
+https://github.com/hahwul/s3reverse
 
  echo "s3 bucket checking started" | notify -bulk 
  mkdir -p s3
