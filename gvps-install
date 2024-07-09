@@ -1,26 +1,16 @@
 #!/bin/bash
 
-#vps
-
-#tools-install
-
-Installing_dependencies (){
-echo 'root' | sudo -kS apt update  ; echo 'root' | sudo -kS apt clean ; echo 'root' | sudo -kS apt autoclean ; echo 'root' | sudo -kS apt upgrade -y ; echo 'root' | sudo -kS apt autoremove -y 
-echo 'root' | sudo -kS apt install toilet lolcat    figlet tar neofetch git vim ripgrep curl  python3 python3-pip3  wget  nmap xsltproc  htop   p7zip-full  masscan  gdu  hydra  build-essential libpcap-dev libusb-1.0-0-dev libnetfilter-queue-dev   jq    gnupg lsb-release -y 
+sudo apt update  ; sudo apt clean ; sudo apt autoclean ; sudo apt upgrade -y ; sudo apt autoremove -y 
+sudo apt install toilet lolcat    figlet tar neofetch git vim ripgrep curl  python3 python3-pip3  wget  nmap xsltproc  htop   p7zip-full  masscan  gdu  hydra  build-essential libpcap-dev libusb-1.0-0-dev libnetfilter-queue-dev   jq    gnupg lsb-release -y 
 
 #go-install
 echo -e "\033[34m[+]Installing GO.. For $OS \033[m"
-sudo add-apt-repository ppa:longsleep/golang-backports
+sudo add-apt-repository ppa:longsleep/golang-backports -y
 sudo apt update
-echo 'root' | sudo -kS apt install golang -y 
+sudo apt install golang -y 
 
-}
-Installing_dependencies
-
-sleep 2
 
 #wordlist
-
 mkdir -p   ~/wordlist  ~/wordlist/dns
 chmod +rwx ~/wordlist
 
@@ -35,11 +25,6 @@ wget https://wordlists-cdn.assetnote.io/data/automated/httparchive_subdomains_20
 
 rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
 
-;
-
-#installing-tools
-tools(){
-
 
 mkdir -p ~/tools
 cd ~/tools
@@ -48,26 +33,26 @@ echo -e "\033[33m[+]Installing...Tools \033[m";
 
 curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
 unzip findomain*
-echo 'root' | sudo -kS chmod +x findomain
-echo 'root' | sudo -kS mv findomain /usr/bin/findomain
-echo 'root' | sudo -kS rm findomain*
+sudo chmod +x findomain
+sudo mv findomain /usr/bin/findomain
+sudo rm findomain*
 
 echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
 chmod +rwx /usr/share/nmap/scripts/
-echo 'root' | sudo -kS rm  vulners.nse* 
-echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse*
-echo 'root' | sudo -kS rm http-vulners-regex.nse
-echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/http-vulners-regex.nse
-echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+sudo rm  vulners.nse* 
+sudo rm  /usr/share/nmap/scripts/vulners.nse*
+sudo rm http-vulners-regex.nse
+sudo rm  /usr/share/nmap/scripts/http-vulners-regex.nse
+sudo wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;sudo mv vulners.nse /usr/share/nmap/scripts/ 
 echo 'root' | sudo  -kS nmap --script-updatedb
 
 
-echo 'root' | sudo -kS pip3 install setuptools
+sudo pip3 install setuptools
 #xss-tools
 git clone https://github.com/devanshbatham/paramspider
 cd paramspider
 chmod +x *
-echo 'root' | sudo -kS pip3 install .
+sudo pip3 install .
 cd ..
 
 
@@ -80,13 +65,13 @@ rm set-all.sh
 git  clone https://github.com/takshal/freq
 cd freq
 chmod +x *
-echo 'root' | sudo -kS go build main.go
-echo 'root' | sudo -kS mv main /usr/local/bin/freq
+sudo go build main.go
+sudo mv main /usr/local/bin/freq
 cd ..
 
-echo 'root' | sudo -kS pip3 install fuzzywuzzy
-echo 'root' | sudo -kS pip3 install requests
-echo 'root' | sudo -kS pip3 install tld
+sudo pip3 install fuzzywuzzy
+sudo pip3 install requests
+sudo pip3 install tld
 
 git clone https://github.com/s0md3v/XSStrike.git
 cd XSStrike
@@ -97,22 +82,22 @@ cd ..
 git clone https://github.com/aboul3la/Sublist3r.git
 cd Sublist3r
 chmod +x *
-echo 'root' | sudo -kS pip3 install  -r requirements.txt
-echo 'root' | sudo -ks python3 setup.py install
+sudo pip3 install  -r requirements.txt
+sudo python3 setup.py install
 cd ..
 
 #sqli
 git clone https://github.com/r0oth3x49/ghauri.git
 cd ghauri
-echo 'root' | sudo -kS pip3 install  -r requirements.txt
+sudo pip3 install  -r requirements.txt
 chmod +x *
-echo 'root' | sudo -ks python3 setup.py install
+sudo python3 setup.py install
 cd ..
 
 #subdomaintakover
 wget https://github.com/Stratus-Security/Subdominator/releases/latest/download/Subdominator
-echo 'root' | sudo -kS chmod +x Subdominator
-echo 'root' | sudo -kS mv Subdominator /usr/local/bin/subdominator
+sudo chmod +x Subdominator
+sudo mv Subdominator /usr/local/bin/subdominator
 
 
 #secret
@@ -120,21 +105,21 @@ echo 'root' | sudo -kS mv Subdominator /usr/local/bin/subdominator
 git clone https://github.com/m4ll0k/SecretFinder.git secretfinder
 cd secretfinder
 chmod +x *
-echo 'root' | sudo -kS pip3 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 cd ..
 
 git clone https://github.com/blechschmidt/massdns.git ~/tools/massdns 
 cd ~/tools/massdns
-echo 'root' | sudo -kS make
-echo 'root' | sudo -kS make install 
+sudo make
+sudo make install 
 cd ..
 
 #cors
 git clone  https://github.com/s0md3v/Corsy.git
 cd Corsy
 chmod +x *
-echo 'root' | sudo -kS pip3 install -r requirements.txt
-echo 'root' | sudo -kS pip3 install requests
+sudo pip3 install -r requirements.txt
+sudo pip3 install requests
 cd ..
 
 
@@ -142,7 +127,7 @@ cd ..
 git clone http://github.com/mzfr/liffy
 cd liffy
 chmod +x *
-echo 'root' | sudo -kS pip3 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 cd ..
 
 
@@ -150,17 +135,17 @@ cd ..
 git clone https://github.com/devanshbatham/openredirex
 cd openredirex
 chmod +x *
-echo 'root' | sudo -kS bash setup.sh
-echo 'root' | sudo -kS pip3 install tqdm
+sudo bash setup.sh
+sudo pip3 install tqdm
 cd ..
 
-echo 'root' | sudo -kS pip3 install uro
-echo 'root' | sudo -kS pip3 install sqlmap
-echo 'root' | sudo -kS  pip3 install git+https://github.com/xnl-h4ck3r/waymore.git -v
-echo 'root' | sudo -kS  pip3 install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git -v
+sudo pip3 install uro
+sudo pip3 install sqlmap
+sudo  pip3 install git+https://github.com/xnl-h4ck3r/waymore.git -v
+sudo  pip3 install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git -v
 sudo  pip3 install git+https://github.com/sanjai-AK47/ShodanX
-echo 'root' | sudo -kS pip3 install appdirs
-echo 'root' | sudo -kS pip3 install alive_progress
+sudo pip3 install appdirs
+sudo pip3 install alive_progress
 
 
 #go-tools
@@ -229,8 +214,8 @@ go install -v github.com/tomnomnom/qsreplace@latest
 go install github.com/tomnomnom/unfurl@latest
 go install github.com/ffuf/ffuf/v2@latest
 #copy-path-to-bin
-echo 'root' | sudo -kS cp -r ~/go/bin/*  /usr/local/bin/ 
-echo 'root' | sudo -kS cp -r ~/gopath/bin/*  /usr/local/bin/ 
+sudo cp -r ~/go/bin/*  /usr/local/bin/ 
+sudo cp -r ~/gopath/bin/*  /usr/local/bin/ 
 
 echo -e ${GREEN}"[+]Done! Go Tools installed."; echo "";
 sleep 1.5
@@ -238,21 +223,13 @@ sleep 1.5
 curl -LO https://raw.githubusercontent.com/lc/gau/master/.gau.toml
 mv .gau.toml ~/.gau.toml
 
-#
 
-echo  -e "\033[32m_________________________________\033[m"
-echo -e "\033[33m[+]Installaltion Done! \033[m"
-
-
-}
-tools
 
 
 cd ~
 echo -e "\033[33m[+]Installing nuclei templates \033[m"
 git clone https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
 git clone https://github.com/0xKayala/fuzzing-templates.git ~/fuzzing-templates
-
 
 cd ~
 
