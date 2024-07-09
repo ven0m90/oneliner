@@ -1,0 +1,288 @@
+#!/bin/bash
+
+#vps
+
+#tools-install
+
+Installing_dependencies (){
+echo 'root' | sudo -kS apt update  ; echo 'root' | sudo -kS apt clean ; echo 'root' | sudo -kS apt autoclean ; echo 'root' | sudo -kS apt upgrade -y ; echo 'root' | sudo -kS apt autoremove -y 
+echo 'root' | sudo -kS apt install toilet lolcat    figlet tar neofetch git vim ripgrep curl  python3 python3-pip  wget  nmap xsltproc  htop   p7zip-full  masscan  gdu  hydra  build-essential libpcap-dev libusb-1.0-0-dev libnetfilter-queue-dev   jq    gnupg lsb-release -y 
+
+#go-install
+echo -e "\033[34m[+]Installing GO.. For $OS \033[m"
+sudo add-apt-repository ppa:longsleep/golang-backports
+sudo apt update
+echo 'root' | sudo -kS apt install golang -y 
+
+}
+Installing_dependencies
+
+sleep 2
+
+#wordlist
+
+mkdir -p   ~/wordlist  ~/wordlist/dns
+chmod +rwx ~/wordlist
+
+git clone https://github.com/orwagodfather/WordList   ~/wordlist/gofather-wordlist
+wget https://raw.githubusercontent.com/six2dez/OneListForAll/main/onelistforallshort.txt  -P ~/wordlist/
+
+wget https://raw.githubusercontent.com/emadshanab/admin-paths/main/admin.txt -P ~/wordlist/
+
+wget https://wordlists-cdn.assetnote.io/data/manual/best-dns-wordlist.txt -P ~/wordlist/dns/
+
+wget https://wordlists-cdn.assetnote.io/data/automated/httparchive_subdomains_2024_05_28.txt -P  ~/wordlist/dns/
+
+rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
+
+;
+
+#installing-tools
+tools(){
+
+
+mkdir -p ~/tools
+cd ~/tools
+
+echo -e "\033[33m[+]Installing...Tools \033[m";
+
+curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+unzip findomain*
+echo 'root' | sudo -kS chmod +x findomain
+echo 'root' | sudo -kS mv findomain /usr/bin/findomain
+echo 'root' | sudo -kS rm findomain*
+
+echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
+chmod +rwx /usr/share/nmap/scripts/
+echo 'root' | sudo -kS rm  vulners.nse* 
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse*
+echo 'root' | sudo -kS rm http-vulners-regex.nse
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/http-vulners-regex.nse
+echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+echo 'root' | sudo  -kS nmap --script-updatedb
+
+
+echo 'root' | sudo -kS pip install setuptools
+#xss-tools
+git clone https://github.com/devanshbatham/paramspider
+cd paramspider
+chmod +x *
+echo 'root' | sudo -kS pip install .
+cd ..
+
+
+#gf
+wget https://raw.githubusercontent.com/emadshanab/Gf-Patterns-Collection/main/set-all.sh
+chmod +x *
+bash set-all.sh
+rm set-all.sh
+
+git  clone https://github.com/takshal/freq
+cd freq
+chmod +x *
+echo 'root' | sudo -kS go build main.go
+echo 'root' | sudo -kS mv main /usr/local/bin/freq
+cd ..
+
+echo 'root' | sudo -kS pip install fuzzywuzzy
+echo 'root' | sudo -kS pip install requests
+echo 'root' | sudo -kS pip install tld
+
+git clone https://github.com/s0md3v/XSStrike.git
+cd XSStrike
+chmod +x *
+cd ..
+
+#subdomains
+git clone https://github.com/aboul3la/Sublist3r.git
+cd Sublist3r
+chmod +x *
+echo 'root' | sudo -kS pip install  -r requirements.txt
+echo 'root' | sudo -ks python3 setup.py install
+cd ..
+
+#sqli
+git clone https://github.com/r0oth3x49/ghauri.git
+cd ghauri
+echo 'root' | sudo -kS pip install  -r requirements.txt
+chmod +x *
+echo 'root' | sudo -ks python3 setup.py install
+cd ..
+
+#subdomaintakover
+wget https://github.com/Stratus-Security/Subdominator/releases/latest/download/Subdominator
+echo 'root' | sudo -kS chmod +x Subdominator
+echo 'root' | sudo -kS mv Subdominator /usr/local/bin/subdominator
+
+
+#secret
+
+git clone https://github.com/m4ll0k/SecretFinder.git secretfinder
+cd secretfinder
+chmod +x *
+echo 'root' | sudo -kS pip install -r requirements.txt
+cd ..
+
+git clone https://github.com/blechschmidt/massdns.git ~/tools/massdns 
+cd ~/tools/massdns
+echo 'root' | sudo -kS make
+echo 'root' | sudo -kS make install 
+cd ..
+
+#cors
+git clone  https://github.com/s0md3v/Corsy.git
+cd Corsy
+chmod +x *
+echo 'root' | sudo -kS pip install -r requirements.txt
+echo 'root' | sudo -kS pip install requests
+cd ..
+
+
+#lfi
+git clone http://github.com/mzfr/liffy
+cd liffy
+chmod +x *
+echo 'root' | sudo -kS pip install -r requirements.txt
+cd ..
+
+
+#open-redirect
+git clone https://github.com/devanshbatham/openredirex
+cd openredirex
+chmod +x *
+echo 'root' | sudo -kS bash setup.sh
+echo 'root' | sudo -kS pip install tqdm
+cd ..
+
+echo 'root' | sudo -kS pip install uro
+echo 'root' | sudo -kS pip install sqlmap
+echo 'root' | sudo -kS  pip3 install git+https://github.com/xnl-h4ck3r/waymore.git -v
+echo 'root' | sudo -kS  pip3 install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git -v
+echo 'root' | sudo -kS pip install git+https://github.com/sanjai-AK47/ShodanX
+echo 'root' | sudo -kS pip install appdirs
+echo 'root' | sudo -kS pip install alive_progress
+
+
+#go-tools
+
+wget https://github.com/projectdiscovery/subfinder/releases/download/v2.6.6/subfinder_2.6.6_linux_amd64.zip
+unzip subfinder_2.6.6_linux_amd64.zip
+sudo mv subfinder /usr/local/bin/
+rm subfinder_2.6.6_linux_amd64.zip
+
+
+wget https://github.com/projectdiscovery/shuffledns/releases/download/v1.1.0/shuffledns_1.1.0_linux_amd64.zip
+unzip shuffledns_1.1.0_linux_amd64.zip
+sudo mv shuffledns /usr/local/bin/
+rm *.zip
+rm README.md LICENSE.md
+
+wget https://github.com/d3mondev/puredns/releases/download/v2.1.1/puredns-Linux-amd64.tgz
+tar -xvf  puredns-Linux-amd64.tgz
+sudo mv puredns /usr/local/bin/
+rm *.tgz
+
+wget https://github.com/projectdiscovery/httpx/releases/download/v1.6.5/httpx_1.6.5_linux_amd64.zip
+unzip httpx_1.6.5_linux_amd64.zip
+sudo mv httpx /usr/local/bin/
+rm *.zip
+rm README.md LICENSE.md
+
+wget https://github.com/projectdiscovery/katana/releases/download/v1.1.0/katana_1.1.0_linux_amd64.zip
+unzip katana_1.1.0_linux_amd64.zip
+sudo mv katana /usr/local/bin/
+rm *.zip
+rm README.md LICENSE.md
+
+wget https://github.com/lc/gau/releases/download/v2.2.3/gau_2.2.3_linux_amd64.tar.gz
+tar -xvf  gau_2.2.3_linux_amd64.tar.gz
+sudo mv gau /usr/local/bin/
+rm *gz
+rm README.md LICENSE*
+
+
+wget https://github.com/projectdiscovery/naabu/releases/download/v2.3.1/naabu_2.3.1_linux_amd64.zip
+unzip naabu_2.3.1_linux_amd64.zip
+sudo mv naabu /usr/local/bin/
+rm *.zip
+rm README.md LICENSE.md
+
+
+wget https://github.com/projectdiscovery/nuclei/releases/download/v3.2.9/nuclei_3.2.9_linux_amd64.zip
+unzip *.zip
+sudo mv nuclei /usr/local/bin/
+rm *.zip
+rm README.md LICENSE.md
+
+wget https://github.com/KathanP19/Gxss/releases/download/v4.1/Gxss_4.1_Linux_x86_64.tar.gz
+tar -xvf Gxss_4.1_Linux_x86_64.tar.gz
+sudo mv Gxss /usr/local/bin/gxss
+rm *gz
+rm README* LICENSE*
+
+echo -e "\033[36m[+]Installing... Go-Tools  \033[m";
+go install github.com/i5nipe/nipejs@latest
+go install -v github.com/LukaSikic/subzy@latest
+go install -v github.com/tomnomnom/gf@latest
+go install -v github.com/tomnomnom/anew@latest
+go install -v github.com/tomnomnom/qsreplace@latest
+go install github.com/tomnomnom/unfurl@latest
+go install github.com/ffuf/ffuf/v2@latest
+#copy-path-to-bin
+echo 'root' | sudo -kS cp -r ~/go/bin/*  /usr/local/bin/ 
+echo 'root' | sudo -kS cp -r ~/gopath/bin/*  /usr/local/bin/ 
+
+echo -e ${GREEN}"[+]Done! Go Tools installed."; echo "";
+sleep 1.5
+
+curl -LO https://raw.githubusercontent.com/lc/gau/master/.gau.toml
+mv .gau.toml ~/.gau.toml
+
+#
+
+echo  -e "\033[32m_________________________________\033[m"
+echo -e "\033[33m[+]Installaltion Done! \033[m"
+
+
+}
+tools
+
+
+cd ~
+echo -e "\033[33m[+]Installing nuclei templates \033[m"
+git clone https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
+git clone https://github.com/0xKayala/fuzzing-templates.git ~/fuzzing-templates
+
+
+cd ~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cd ~/tools/massdns
+wget https://github.com/projectdiscovery/shuffledns/releases/download/v1.1.0/shuffledns_1.1.0_linux_amd64.zip
+
+unzip shuffledns_1.1.0_linux_amd64.zip
+sudo cp -r  shuffledns /usr/local/bin/
+
+echo 'root' | sudo -kS make
+echo 'root' | sudo -kS make install 
+cd ~/paytm
+
