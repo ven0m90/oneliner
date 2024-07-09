@@ -256,33 +256,3 @@ git clone https://github.com/0xKayala/fuzzing-templates.git ~/fuzzing-templates
 
 cd ~
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-cd ~/tools/massdns
-wget https://github.com/projectdiscovery/shuffledns/releases/download/v1.1.0/shuffledns_1.1.0_linux_amd64.zip
-
-unzip shuffledns_1.1.0_linux_amd64.zip
-sudo cp -r  shuffledns /usr/local/bin/
-
-echo 'root' | sudo -kS make
-echo 'root' | sudo -kS make install 
-cd ~/paytm
-
