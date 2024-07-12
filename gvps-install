@@ -25,6 +25,8 @@ wget https://wordlists-cdn.assetnote.io/data/automated/httparchive_subdomains_20
 
 rm ~/wordlist/resolvers.txt ; curl -L https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -o ~/wordlist/resolvers.txt
 
+rm ~/wordlist/*1
+rm ~/wordlist/dns/*1
 
 mkdir -p ~/tools
 cd ~/tools
@@ -232,4 +234,3 @@ git clone https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-temp
 git clone https://github.com/0xKayala/fuzzing-templates.git ~/fuzzing-templates
 
 cd ~
-
