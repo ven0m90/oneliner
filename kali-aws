@@ -1,0 +1,217 @@
+#!/bin/bash
+#tools-install
+
+Installing_dependencies (){
+#kali linux
+
+echo 'root' | sudo -kS apt update  ; echo 'root' | sudo -kS apt clean ; echo 'root' | sudo -kS apt autoclean ; echo 'root' | sudo -kS apt upgrade -y ; echo 'root' | sudo -kS apt autoremove -y 
+echo 'root' | sudo -kS apt install toilet lolcat    figlet tar neofetch git vim ripgrep curl  python3 python3-pip3  wget  nmap xsltproc  htop   p7zip-full  masscan  gdu  hydra  build-essential libpcap-dev libusb-1.0-0-dev libnetfilter-queue-dev   jq    gnupg lsb-release -y 
+
+#go-install
+echo -e "\033[34m[+]Installing GO.. For $OS \033[m"
+echo 'root' | sudo -kS apt install golang -y 
+
+}
+Installing_dependencies
+
+sleep 2
+
+#installing-tools
+tools(){
+
+
+mkdir -p ~/tools
+cd ~/tools
+
+echo -e "\033[33m[+]Installing...Tools \033[m";
+sleep 2
+
+curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+unzip findomain*
+echo 'root' | sudo -kS chmod +x findomain
+echo 'root' | sudo -kS mv findomain /usr/bin/findomain
+echo 'root' | sudo -kS rm findomain*
+
+
+echo -e "\033[36m[+]nmap-vulners Updating...\033[m" 
+chmod +rwx /usr/share/nmap/scripts/
+echo 'root' | sudo -kS rm  vulners.nse* 
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/vulners.nse*
+echo 'root' | sudo -kS rm http-vulners-regex.nse
+echo 'root' | sudo -kS rm  /usr/share/nmap/scripts/http-vulners-regex.nse
+echo 'root' | sudo -kS wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse ;echo 'root' | sudo -kS mv vulners.nse /usr/share/nmap/scripts/ 
+echo 'root' | sudo  -kS nmap --script-updatedb
+
+#gf
+wget https://raw.githubusercontent.com/emadshanab/Gf-Patterns-Collection/main/set-all.sh
+chmod +x *
+bash set-all.sh
+
+git  clone https://github.com/takshal/freq
+cd freq
+chmod +x *
+echo 'root' | sudo -kS go build main.go
+echo 'root' | sudo -kS mv main /usr/local/bin/freq
+cd ..
+
+echo 'root' | sudo -kS pip3 install fuzzywuzzy
+echo 'root' | sudo -kS pip3 install requests
+echo 'root' | sudo -kS pip3 install tld
+
+git clone https://github.com/s0md3v/XSStrike.git
+cd XSStrike
+chmod +x *
+cd ..
+
+
+#sqli
+git clone https://github.com/r0oth3x49/ghauri.git
+cd ghauri
+echo 'root' | sudo -kS pip3 install  -r requirements.txt
+chmod +x *
+echo 'root' | sudo -ks python3 setup.py install
+cd ..
+
+#ssrf
+go install github.com/assetnote/surf/cmd/surf@latest
+echo 'root' | sudo -kS cp -r ~/go/bin/surf  /usr/local/bin/ 
+
+git clone https://github.com/swisskyrepo/SSRFmap
+cd SSRFmap
+echo 'root' | sudo -kS pip3 install -r requirements.txt
+chmod +x *
+cd ..
+
+
+
+#secret
+git clone https://github.com/m4ll0k/SecretFinder.git secretfinder
+cd secretfinder
+chmod +x *
+echo 'root' | sudo -kS pip3 install -r requirements.txt
+cd ..
+
+
+#js-enum
+go install github.com/i5nipe/nipejs@latest
+echo 'root' | sudo -kS cp -r ~/go/bin/*  /usr/local/bin/    
+
+
+
+git clone https://github.com/blechschmidt/massdns.git ~/tools/massdns 
+cd ~/tools/massdns
+echo 'root' | sudo -kS make
+echo 'root' | sudo -kS make install 
+cd ..
+
+#cors
+git clone  https://github.com/s0md3v/Corsy.git
+cd Corsy
+chmod +x *
+echo 'root' | sudo -kS pip3 install -r requirements.txt
+echo 'root' | sudo -kS pip3 install requests
+cd ..
+
+#smugller
+
+git clone https://github.com/anshumanpattnaik/http-request-smuggling.git
+cd http-request-smuggling
+chmod +x *
+echo 'root' | sudo -kS pip3 install -r requirements.txt
+cd ..
+
+#crlf injection
+go install github.com/dwisiswant0/crlfuzz/cmd/crlfuzz@latest
+
+#lfi
+git clone http://github.com/mzfr/liffy
+cd liffy
+chmod +x *
+echo 'root' | sudo -kS pip3 install -r requirements.txt
+cd ..
+
+
+
+#host headr injection
+go install github.com/mlcsec/headi@latest
+
+
+#open-redirect
+git clone https://github.com/devanshbatham/openredirex
+cd openredirex
+chmod +x *
+echo 'root' | sudo -kS bash setup.sh
+echo 'root' | sudo -kS pip3 install tqdm
+cd ..
+
+#pip3-tools
+echo 'root' | sudo -kS pip3 install lolcat  wget 
+
+
+echo 'root' | sudo -kS pip3 install arjun  
+echo 'root' | sudo -kS pip3 install uro
+
+echo 'root' | sudo -kS pip3 install dirsearch 
+echo 'root' | sudo -kS pip3 install sqlmap
+echo 'root' | sudo -kS  pip33 install git+https://github.com/xnl-h4ck3r/waymore.git -v
+echo 'root' | sudo -kS  pip33 install git+https://github.com/xnl-h4ck3r/xnLinkFinder.git -v
+
+echo 'root' | sudo -kS pip3 install git+https://github.com/sanjai-AK47/ShodanX
+echo 'root' | sudo -kS pip3 install appdirs
+echo 'root' | sudo -kS pip3 install alive_progress
+
+
+#go-tools
+
+
+echo -e "\033[36m[+]Installing... Go-Tools  \033[m";
+go install -v github.com/projectdiscovery/notify/cmd/notify@latest
+go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
+go install github.com/d3mondev/puredns/v2@latest
+go install -v github.com/tomnomnom/gf@latest
+go install github.com/dwisiswant0/gfx@latest
+go install -v github.com/tomnomnom/anew@latest
+go install -v github.com/tomnomnom/qsreplace@latest
+go install github.com/tomnomnom/unfurl@latest
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+go install github.com/hakluke/hakrawler@latest
+go install github.com/projectdiscovery/katana/cmd/katana@latest
+go install github.com/lc/gau/v2/cmd/gau@latest
+go install github.com/ffuf/ffuf/v2@latest
+go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
+go install github.com/KathanP19/Gxss@latest
+go install -v github.com/ethicalhackingplayground/bxss@latest
+go install github.com/hahwul/dalfox/v2@latest
+
+#copy-path-to-bin
+echo 'root' | sudo -kS cp -r ~/go/bin/*  /usr/local/bin/ 
+
+
+echo -e ${GREEN}"[+]Done! Go Tools installed."; echo "";
+sleep 1.5
+
+curl -LO https://raw.githubusercontent.com/lc/gau/master/.gau.toml
+mv .gau.toml ~/.gau.toml
+
+#
+
+echo  -e "\033[32m_________________________________\033[m"
+echo -e "\033[33m[+]Installaltion Done! \033[m"
+
+
+}
+tools
+
+
+cd ~
+echo -e "\033[33m[+]Installing nuclei templates \033[m"
+git clone https://github.com/projectdiscovery/nuclei-templates.git ~/nuclei-templates
+git clone https://github.com/0xKayala/fuzzing-templates.git ~/fuzzing-templates
+
+
+
+cd ~
+
+
